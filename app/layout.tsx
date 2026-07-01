@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -9,11 +10,6 @@ export const metadata: Metadata = {
   description: "Plataforma de cursos online para servidores públicos, agentes políticos e profissionais que atuam com gestão pública",
   keywords: ["cursos online", "gestão pública", "licitações", "LGPD", "administração pública"],
   authors: [{ name: "Valeriote Cursos e Consultoria" }],
-  openGraph: {
-    title: "Valeriote Cursos Online",
-    description: "Capacitação profissional para o setor público",
-    type: "website",
-  },
 };
 
 export default function RootLayout({
@@ -29,7 +25,9 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={`${inter.className} h-full antialiased bg-valeriote-gray-50 text-valeriote-gray-900`}>
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

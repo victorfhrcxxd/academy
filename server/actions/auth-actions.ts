@@ -19,7 +19,8 @@ export async function registerUser(
     if (!parsed.success) {
       return {
         success: false,
-        error: parsed.error.errors[0].message,
+        message: 'Validação falhou',
+        error: parsed.error.issues[0].message,
       }
     }
 
@@ -33,6 +34,7 @@ export async function registerUser(
     if (existingUser) {
       return {
         success: false,
+        message: 'Email já cadastrado',
         error: 'Email já cadastrado',
       }
     }
@@ -64,6 +66,7 @@ export async function registerUser(
     console.error('Register error:', error)
     return {
       success: false,
+      message: 'Erro ao cadastrar',
       error: 'Erro ao cadastrar. Tente novamente.',
     }
   }
@@ -80,7 +83,8 @@ export async function loginUser(formData: unknown): Promise<ActionResponse> {
     if (!parsed.success) {
       return {
         success: false,
-        error: parsed.error.errors[0].message,
+        message: 'Validação falhou',
+        error: parsed.error.issues[0].message,
       }
     }
 
@@ -94,6 +98,7 @@ export async function loginUser(formData: unknown): Promise<ActionResponse> {
     if (!user) {
       return {
         success: false,
+        message: 'Credenciais inválidas',
         error: 'Email ou senha incorretos',
       }
     }
@@ -101,6 +106,7 @@ export async function loginUser(formData: unknown): Promise<ActionResponse> {
     if (user.status === 'SUSPENDED') {
       return {
         success: false,
+        message: 'Conta suspensa',
         error: 'Usuário suspenso',
       }
     }
@@ -111,6 +117,7 @@ export async function loginUser(formData: unknown): Promise<ActionResponse> {
     if (!isPasswordValid) {
       return {
         success: false,
+        message: 'Credenciais inválidas',
         error: 'Email ou senha incorretos',
       }
     }
@@ -129,6 +136,7 @@ export async function loginUser(formData: unknown): Promise<ActionResponse> {
     console.error('Login error:', error)
     return {
       success: false,
+      message: 'Erro ao fazer login',
       error: 'Erro ao fazer login. Tente novamente.',
     }
   }
@@ -151,6 +159,7 @@ export async function requestPasswordReset(email: string): Promise<ActionRespons
     if (!email) {
       return {
         success: false,
+        message: 'Email é obrigatório',
         error: 'Email é obrigatório',
       }
     }
@@ -178,6 +187,7 @@ export async function requestPasswordReset(email: string): Promise<ActionRespons
     console.error('Password reset error:', error)
     return {
       success: false,
+      message: 'Erro ao solicitar recuperação',
       error: 'Erro ao solicitar recuperação. Tente novamente.',
     }
   }

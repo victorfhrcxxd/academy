@@ -1,65 +1,194 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-valeriote-gray-50">
+      {/* Header */}
+      <header className="border-b border-valeriote-gray-200 bg-white">
+        <nav className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+          <div className="text-2xl font-bold text-valeriote-navy-950">
+            Valeriote
+          </div>
+          <div className="flex gap-6 items-center">
+            <a
+              href="/login"
+              className="text-valeriote-navy-950 hover:text-valeriote-navy-700 font-medium"
+            >
+              Entrar
+            </a>
+            <a
+              href="/cadastro"
+              className="bg-valeriote-navy-950 text-white px-6 py-2 rounded-lg font-medium hover:bg-valeriote-navy-900 transition"
+            >
+              Cadastro
+            </a>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-valeriote-navy-950 mb-6">
+            Cursos Online de Excelência
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+          <p className="text-xl text-valeriote-gray-600 mb-8 max-w-2xl mx-auto">
+            Capacitação profissional para servidores públicos, agentes políticos e profissionais que atuam com gestão pública.
+          </p>
+          <a
+            href="/cursos"
+            className="inline-block bg-valeriote-gold-950 text-white px-8 py-3 rounded-lg font-medium hover:bg-valeriote-gold-900 transition"
+          >
+            Explorar Cursos
+          </a>
+        </div>
+      </section>
+
+      {/* Status Card */}
+      <section className="mx-auto max-w-7xl px-6 py-16">
+        <div className="bg-white rounded-lg border border-valeriote-gray-200 p-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            {/* Status */}
+            <div>
+              <div className="text-3xl font-bold text-valeriote-navy-950 mb-2">
+                ✓
+              </div>
+              <h3 className="font-semibold text-valeriote-gray-900 mb-2">
+                Etapa 1: Fundação
+              </h3>
+              <p className="text-valeriote-gray-600 text-sm">
+                Setup inicial completo e design system implementado
+              </p>
+            </div>
+
+            {/* Database */}
+            <div>
+              <div className="text-3xl font-bold text-valeriote-teal-900 mb-2">
+                ✓
+              </div>
+              <h3 className="font-semibold text-valeriote-gray-900 mb-2">
+                Banco de Dados
+              </h3>
+              <p className="text-valeriote-gray-600 text-sm">
+                Schema Prisma com 13 modelos configurados
+              </p>
+            </div>
+
+            {/* Design */}
+            <div>
+              <div className="text-3xl font-bold text-valeriote-gold-950 mb-2">
+                ✓
+              </div>
+              <h3 className="font-semibold text-valeriote-gray-900 mb-2">
+                Design System
+              </h3>
+              <p className="text-valeriote-gray-600 text-sm">
+                Paleta Valeriote: azul-marinho, dourado e verde-petróleo
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="mx-auto max-w-7xl px-6 py-16">
+        <h2 className="text-3xl font-bold text-valeriote-navy-950 mb-12 text-center">
+          Roadmap de Desenvolvimento
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { step: 1, title: 'Fundação', status: '✓ Completo' },
+            { step: 2, title: 'Autenticação', status: '→ Próximo' },
+            { step: 3, title: 'Cursos', status: '○ Planejado' },
+            { step: 4, title: 'Módulos & Aulas', status: '○ Planejado' },
+            { step: 5, title: 'Área Membros', status: '○ Planejado' },
+            { step: 6, title: 'Compras', status: '○ Planejado' },
+            { step: 7, title: 'Admin', status: '○ Planejado' },
+            { step: 8, title: 'Deploy', status: '○ Planejado' },
+          ].map((item) => (
+            <div
+              key={item.step}
+              className="bg-white rounded-lg border border-valeriote-gray-200 p-6"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              <div className="text-sm font-semibold text-valeriote-gold-950 mb-2">
+                ETAPA {item.step}
+              </div>
+              <h3 className="text-lg font-bold text-valeriote-navy-950 mb-2">
+                {item.title}
+              </h3>
+              <p className="text-sm text-valeriote-gray-600">{item.status}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Tech Stack */}
+      <section className="mx-auto max-w-7xl px-6 py-16 bg-valeriote-navy-950 rounded-lg text-white">
+        <h2 className="text-3xl font-bold mb-8">Stack Tecnológico</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div>
+            <h3 className="text-lg font-bold mb-4">Frontend & Backend</h3>
+            <ul className="space-y-2 text-sm">
+              <li>→ Next.js 14</li>
+              <li>→ TypeScript</li>
+              <li>→ Tailwind CSS</li>
+              <li>→ shadcn/ui</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold mb-4">Backend & Auth</h3>
+            <ul className="space-y-2 text-sm">
+              <li>→ NextAuth.js</li>
+              <li>→ Prisma ORM</li>
+              <li>→ PostgreSQL</li>
+              <li>→ Zod Validation</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="text-lg font-bold mb-4">Futuro</h3>
+            <ul className="space-y-2 text-sm">
+              <li>→ Cloudflare R2</li>
+              <li>→ Resend (Email)</li>
+              <li>→ Stripe / Mercado Pago</li>
+              <li>→ Vercel Deploy</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="mx-auto max-w-7xl px-6 py-20 text-center">
+        <h2 className="text-3xl font-bold text-valeriote-navy-950 mb-6">
+          Pronto para começar?
+        </h2>
+        <p className="text-xl text-valeriote-gray-600 mb-8 max-w-2xl mx-auto">
+          Explore nossos cursos e comece sua jornada de aprendizado com a Valeriote
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a
+            href="/cursos"
+            className="bg-valeriote-navy-950 text-white px-8 py-3 rounded-lg font-medium hover:bg-valeriote-navy-900 transition"
+          >
+            Ver Cursos
+          </a>
+          <a
+            href="/cadastro"
+            className="border-2 border-valeriote-navy-950 text-valeriote-navy-950 px-8 py-3 rounded-lg font-medium hover:bg-valeriote-navy-50 transition"
+          >
+            Criar Conta
+          </a>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-valeriote-navy-950 text-white py-8">
+        <div className="mx-auto max-w-7xl px-6 text-center">
+          <p className="text-sm text-valeriote-gray-400">
+            © 2024 Valeriote Cursos e Consultoria. Todos os direitos reservados.
+          </p>
+          <p className="text-xs text-valeriote-gray-500 mt-2">
+            Capacitação para o setor público | Cursos Online | Consultoria
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
     </div>
-  );
+  )
 }

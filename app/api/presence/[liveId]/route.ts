@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { isSessionCurrent } from '@/lib/session-guard'
 import { prisma } from '@/lib/db'
 
 // Ping de presença: o player do aluno chama a cada ~45s enquanto assiste.
@@ -18,6 +19,10 @@ export async function POST(
   // Admin não conta presença (é equipe)
   if (session.user.role === 'ADMIN') {
     return NextResponse.json({ ok: true, staff: true })
+  }
+
+  if (!(await isSessionCurrent(session))) {
+    return NextResponse.json({ error: 'Sessão encerrada' }, { status: 403 })
   }
 
   const live = await prisma.live.findUnique({
@@ -51,6 +56,15 @@ export async function POST(
       data: { watchSeconds: { increment: credit }, lastSeenAt: now },
     })
   }
+
+  // atualiza o pico de espectadores simultâneos (janela de 2 min)
+  const activeCount = await prisma.attendance.count({
+    where: { liveId, lastSeenAt: { gt: new Date(Date.now() - 2 * 60 * 1000) } },
+  })
+  await prisma.live.updateMany({
+    where: { id: liveId, peakViewers: { lt: activeCount } },
+    data: { peakViewers: activeCount },
+  })
 
   return NextResponse.json({ ok: true })
 }

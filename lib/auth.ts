@@ -1,6 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import { prisma } from './db'
 
 export const authOptions: NextAuthOptions = {
@@ -34,12 +35,24 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email ou senha incorretos')
         }
 
+        // Sessão única para alunos: cada login gera um id novo e derruba o anterior.
+        // Admins podem ter várias sessões (celular + computador).
+        let sessionId: string | null = null
+        if (user.role === 'MEMBER') {
+          sessionId = randomBytes(16).toString('hex')
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { activeSessionId: sessionId },
+          })
+        }
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
           role: user.role as 'ADMIN' | 'MEMBER',
           status: user.status as 'ACTIVE' | 'INACTIVE',
+          sessionId,
         }
       },
     }),
@@ -57,6 +70,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role
         token.status = user.status
+        token.sessionId = user.sessionId ?? null
       }
       return token
     },
@@ -65,6 +79,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub as string
         session.user.role = token.role as 'ADMIN' | 'MEMBER'
         session.user.status = token.status as 'ACTIVE' | 'INACTIVE'
+        session.user.sessionId = (token.sessionId as string | null) ?? null
       }
       return session
     },

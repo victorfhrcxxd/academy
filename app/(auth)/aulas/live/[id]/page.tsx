@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
-import LiveChat from '@/components/LiveChat'
+import LiveSidePanel from '@/components/LiveSidePanel'
 import ProtectedPlayer from '@/components/ProtectedPlayer'
 import AttendanceTracker from '@/components/AttendanceTracker'
 
@@ -30,7 +30,11 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
 
   const live = await prisma.live.findUnique({
     where: { id },
-    include: { course: true, talks: { orderBy: { startsAt: 'asc' } } },
+    include: {
+      course: true,
+      talks: { orderBy: { startsAt: 'asc' } },
+      materials: { orderBy: { createdAt: 'asc' } },
+    },
   })
 
   if (!live) notFound()
@@ -140,6 +144,30 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
+          {live.materials.length > 0 && (
+            <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
+              <h2 className="font-bold text-navy-950 mb-4">📎 Materiais do dia</h2>
+              <div className="space-y-2">
+                {live.materials.map((m) => (
+                  <a
+                    key={m.id}
+                    href={m.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-navy-600/40 hover:bg-navy-900/5 transition"
+                  >
+                    <span className="text-sm font-medium text-navy-950 truncate">
+                      📄 {m.title}
+                    </span>
+                    <span className="text-xs font-bold text-navy-700 shrink-0">
+                      Baixar ↓
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {live.description && (
             <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="font-semibold text-navy-950 mb-2">Sobre este dia</h2>
@@ -149,7 +177,7 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="lg:h-[calc(100vh-230px)] lg:min-h-[540px] lg:sticky lg:top-6">
-          <LiveChat liveId={live.id} canModerate={isAdmin} />
+          <LiveSidePanel liveId={live.id} canModerate={isAdmin} />
         </div>
       </div>
     </div>

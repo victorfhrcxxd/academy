@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { isSessionCurrent } from '@/lib/session-guard'
 import { prisma } from '@/lib/db'
 
 // Garante que o usuário logado pode participar do chat desta palestra
 async function authorize(liveId: string) {
   const session = await getServerSession(authOptions)
   if (!session) return null
+  if (!(await isSessionCurrent(session))) return null
 
   const live = await prisma.live.findUnique({
     where: { id: liveId },
-    select: { courseId: true, chatLocked: true, chatSlowMode: true },
+    select: {
+      courseId: true,
+      chatLocked: true,
+      chatSlowMode: true,
+      pinnedMessageId: true,
+    },
   })
   if (!live) return null
 
@@ -38,18 +45,33 @@ export async function GET(
 
   const after = req.nextUrl.searchParams.get('after')
 
-  const messages = await prisma.chatMessage.findMany({
-    where: {
-      liveId,
-      ...(after ? { createdAt: { gt: new Date(after) } } : {}),
-    },
-    include: { user: { select: { name: true, role: true } } },
-    orderBy: { createdAt: 'asc' },
-    take: 200,
-  })
+  const [messages, pinnedMessage] = await Promise.all([
+    prisma.chatMessage.findMany({
+      where: {
+        liveId,
+        ...(after ? { createdAt: { gt: new Date(after) } } : {}),
+      },
+      include: { user: { select: { name: true, role: true } } },
+      orderBy: { createdAt: 'asc' },
+      take: 200,
+    }),
+    auth.live.pinnedMessageId
+      ? prisma.chatMessage.findUnique({
+          where: { id: auth.live.pinnedMessageId },
+          include: { user: { select: { name: true, role: true } } },
+        })
+      : Promise.resolve(null),
+  ])
 
   return NextResponse.json({
     settings: { locked: auth.live.chatLocked, slowMode: auth.live.chatSlowMode },
+    pinned: pinnedMessage
+      ? {
+          id: pinnedMessage.id,
+          text: pinnedMessage.text,
+          author: pinnedMessage.displayName || pinnedMessage.user.name,
+        }
+      : null,
     messages: messages.map((m) => ({
       id: m.id,
       text: m.text,
@@ -131,10 +153,15 @@ export async function PATCH(
   }
 
   const body = await req.json().catch(() => null)
-  const data: { chatLocked?: boolean; chatSlowMode?: number } = {}
+  const data: { chatLocked?: boolean; chatSlowMode?: number; pinnedMessageId?: string | null } =
+    {}
   if (typeof body?.locked === 'boolean') data.chatLocked = body.locked
   if (typeof body?.slowMode === 'number' && body.slowMode >= 0 && body.slowMode <= 600) {
     data.chatSlowMode = Math.round(body.slowMode)
+  }
+  // fixar/desafixar mensagem: {pin: "id"} ou {pin: null}
+  if ('pin' in (body || {})) {
+    data.pinnedMessageId = typeof body.pin === 'string' ? body.pin : null
   }
   if (Object.keys(data).length === 0) {
     return NextResponse.json({ error: 'Nada para atualizar' }, { status: 400 })

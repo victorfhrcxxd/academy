@@ -18,15 +18,18 @@ model User {
   name      String
   email     String   @unique
   password  String // bcrypt hash
-  role      String   @default("MEMBER")
-  status    String   @default("ACTIVE")
+  role            String  @default("MEMBER")
+  status          String  @default("ACTIVE")
+  activeSessionId String? // sessão única: id da última sessão válida (alunos)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   enrollments  Enrollment[]
   chatMessages ChatMessage[]
-  attendances  Attendance[]
-  resetTokens  PasswordResetToken[]
+  attendances   Attendance[]
+  resetTokens   PasswordResetToken[]
+  questions     Question[]
+  questionVotes QuestionVote[]
 
   @@index([role])
   @@index([status])
@@ -73,9 +76,11 @@ model Live {
   embedUrl     String?
   replayUrl    String? // gravação (VOD) liberada depois que o dia encerra
   status       String    @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
-  chatLocked     Boolean @default(false) // chat bloqueado pela equipe
-  chatSlowMode   Int     @default(0) // modo lento: segundos entre mensagens por aluno (0 = off)
-  restrictPlayer Boolean @default(false) // player protegido: oculta título/controles do YouTube e impede pausar
+  chatLocked      Boolean @default(false) // chat bloqueado pela equipe
+  chatSlowMode    Int     @default(0) // modo lento: segundos entre mensagens por aluno (0 = off)
+  restrictPlayer  Boolean @default(false) // player protegido: oculta título/controles do YouTube e impede pausar
+  pinnedMessageId String? // mensagem fixada no topo do chat
+  peakViewers     Int     @default(0) // pico de espectadores simultâneos
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -83,9 +88,53 @@ model Live {
   talks       Talk[]
   messages    ChatMessage[]
   attendances Attendance[]
+  questions   Question[]
+  materials   Material[]
 
   @@index([courseId])
   @@index([status])
+}
+
+// Pergunta do Q&A de um dia (separada do chat)
+model Question {
+  id        String   @id @default(cuid())
+  liveId    String
+  userId    String
+  text      String
+  answered  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  live  Live           @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes QuestionVote[]
+
+  @@index([liveId])
+}
+
+model QuestionVote {
+  id         String   @id @default(cuid())
+  questionId String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, userId])
+}
+
+// Material de apoio de um dia (PDF/slide hospedado no Vercel Blob)
+model Material {
+  id        String   @id @default(cuid())
+  liveId    String
+  title     String
+  url       String
+  size      Int? // bytes
+  createdAt DateTime @default(now())
+
+  live Live @relation(fields: [liveId], references: [id], onDelete: Cascade)
+
+  @@index([liveId])
 }
 
 // Presença: quanto tempo cada aluno assistiu à transmissão de um dia

@@ -14,6 +14,7 @@ export default async function AdminLivesPage() {
           include: { user: { select: { name: true, email: true } } },
           orderBy: { watchSeconds: 'desc' },
         },
+        materials: { orderBy: { createdAt: 'asc' } },
       },
       orderBy: { scheduledAt: 'asc' },
     }),
@@ -41,6 +42,12 @@ export default async function AdminLivesPage() {
       email: a.user.email,
       minutes: Math.round(a.watchSeconds / 60),
       lastSeenAt: a.lastSeenAt.toISOString(),
+    })),
+    materials: l.materials.map((m) => ({
+      id: m.id,
+      title: m.title,
+      url: m.url,
+      size: m.size,
     })),
     talks: l.talks.map((t) => ({
       id: t.id,

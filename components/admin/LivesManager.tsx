@@ -9,7 +9,10 @@ import {
   deleteLive,
 } from '@/server/actions/live-actions'
 import { createTalk, updateTalk, deleteTalk } from '@/server/actions/talk-actions'
+import { createMaterial, deleteMaterial } from '@/server/actions/material-actions'
+import { upload } from '@vercel/blob/client'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
+import AdminLiveMetrics from '@/components/admin/AdminLiveMetrics'
 
 interface Course {
   id: string
@@ -33,6 +36,13 @@ interface AttendanceRow {
   lastSeenAt: string
 }
 
+interface MaterialRow {
+  id: string
+  title: string
+  url: string
+  size: number | null
+}
+
 interface Day {
   id: string
   courseId: string
@@ -47,6 +57,13 @@ interface Day {
   status: string
   talks: Talk[]
   attendances: AttendanceRow[]
+  materials: MaterialRow[]
+}
+
+function formatSize(bytes: number | null) {
+  if (!bytes) return ''
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -113,6 +130,12 @@ export default function LivesManager({
   const [replayUrl, setReplayUrl] = useState('')
   const [restrictPlayer, setRestrictPlayer] = useState(true)
   const [openPresence, setOpenPresence] = useState<string | null>(null)
+
+  // ---- materiais ----
+  const [openMaterials, setOpenMaterials] = useState<string | null>(null)
+  const [matTitle, setMatTitle] = useState('')
+  const [matFile, setMatFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   // ---- programação (palestras) ----
   const [openProgram, setOpenProgram] = useState<string | null>(null)
@@ -264,6 +287,44 @@ export default function LivesManager({
     startTransition(async () => {
       const res = await deleteTalk(t.id)
       notify(res.success, res.success ? 'Palestra removida' : res.error || 'Erro')
+    })
+  }
+
+  // ---- materiais ----
+  const handleUploadMaterial = async (e: React.FormEvent, dayId: string) => {
+    e.preventDefault()
+    if (!matFile || uploading) return
+    setUploading(true)
+    try {
+      const blob = await upload(matFile.name, matFile, {
+        access: 'public',
+        handleUploadUrl: '/api/materials/upload',
+      })
+      const res = await createMaterial({
+        liveId: dayId,
+        title: matTitle || matFile.name.replace(/\.[^.]+$/, ''),
+        url: blob.url,
+        size: matFile.size,
+      })
+      if (res.success) {
+        notify(true, 'Material publicado')
+        setMatTitle('')
+        setMatFile(null)
+      } else {
+        notify(false, res.error || 'Erro ao salvar material')
+      }
+    } catch {
+      notify(false, 'Falha no upload — tente novamente')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDeleteMaterial = (m: MaterialRow) => {
+    if (!confirm(`Remover o material "${m.title}"?`)) return
+    startTransition(async () => {
+      const res = await deleteMaterial(m.id)
+      notify(res.success, res.success ? 'Material removido' : res.error || 'Erro')
     })
   }
 
@@ -511,14 +572,95 @@ export default function LivesManager({
                 >
                   👥 Presenças ({d.attendances.length})
                 </button>
+                <button
+                  onClick={() => {
+                    setOpenMaterials(openMaterials === d.id ? null : d.id)
+                    setMatTitle('')
+                    setMatFile(null)
+                  }}
+                  className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
+                >
+                  📎 Materiais ({d.materials.length})
+                </button>
               </div>
             </div>
+
+            {openMaterials === d.id && (
+              <div className="border-t border-gray-100 p-5">
+                <p className="text-xs font-bold uppercase text-gray-400 mb-3">
+                  Materiais de {d.title}
+                </p>
+
+                <form
+                  onSubmit={(e) => handleUploadMaterial(e, d.id)}
+                  className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4"
+                >
+                  <div className="flex-1 min-w-[200px]">
+                    <label className={labelCls}>Título</label>
+                    <input
+                      value={matTitle}
+                      onChange={(e) => setMatTitle(e.target.value)}
+                      className={inputCls}
+                      placeholder="Ex.: Slides — Fiscalização de contratos"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Arquivo (PDF, slides, zip...)</label>
+                    <input
+                      type="file"
+                      accept=".pdf,.zip,.pptx,.docx,.xlsx,.png,.jpg,.jpeg"
+                      onChange={(e) => setMatFile(e.target.files?.[0] || null)}
+                      className="text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-navy-950 file:px-3 file:py-1.5 file:text-white file:text-xs file:font-bold file:cursor-pointer"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={uploading || !matFile}
+                    className="rounded-lg bg-gold-500 hover:bg-gold-600 px-4 py-2 text-sm font-bold text-navy-950 transition disabled:opacity-50"
+                  >
+                    {uploading ? 'Enviando...' : 'Publicar'}
+                  </button>
+                </form>
+
+                {d.materials.length === 0 ? (
+                  <p className="text-sm text-gray-500">Nenhum material publicado ainda.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {d.materials.map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-2.5"
+                      >
+                        <a
+                          href={m.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium text-navy-900 hover:underline truncate"
+                        >
+                          📄 {m.title}
+                          {m.size ? (
+                            <span className="text-gray-400 font-normal"> · {formatSize(m.size)}</span>
+                          ) : null}
+                        </a>
+                        <button
+                          onClick={() => handleDeleteMaterial(m)}
+                          className="rounded-lg border border-red-200 text-red-600 px-2.5 py-1.5 text-xs font-medium hover:bg-red-50 shrink-0"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {openPresence === d.id && (
               <div className="border-t border-gray-100 p-5">
                 <p className="text-xs font-bold uppercase text-gray-400 mb-3">
                   Presenças em {d.title}
                 </p>
+                <AdminLiveMetrics liveId={d.id} />
                 {d.attendances.length === 0 ? (
                   <p className="text-sm text-gray-500">
                     Nenhum aluno assistiu a este dia ainda.

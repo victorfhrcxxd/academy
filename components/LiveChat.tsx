@@ -19,15 +19,18 @@ const timeFormatter = new Intl.DateTimeFormat('pt-BR', {
 export default function LiveChat({
   liveId,
   canModerate,
+  embedded = false,
 }: {
   liveId: string
   canModerate: boolean
+  embedded?: boolean
 }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [settings, setSettings] = useState({ locked: false, slowMode: 0 })
+  const [pinned, setPinned] = useState<{ id: string; text: string; author: string } | null>(null)
   const [displayName, setDisplayName] = useState('')
   const [showNameInput, setShowNameInput] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
@@ -46,6 +49,7 @@ export default function LiveChat({
       if (!res.ok) return
       const data = await res.json()
       if (data.settings) setSettings(data.settings)
+      setPinned(data.pinned ?? null)
       const incoming: ChatMessage[] = data.messages || []
       if (incoming.length === 0) return
       lastAtRef.current = incoming[incoming.length - 1].createdAt
@@ -119,7 +123,11 @@ export default function LiveChat({
     setMessages((prev) => prev.filter((m) => m.id !== id))
   }
 
-  const updateSettings = async (patch: { locked?: boolean; slowMode?: number }) => {
+  const updateSettings = async (patch: {
+    locked?: boolean
+    slowMode?: number
+    pin?: string | null
+  }) => {
     const res = await fetch(`/api/chat/${liveId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -128,13 +136,26 @@ export default function LiveChat({
     if (res.ok) {
       const d = await res.json()
       if (d.settings) setSettings(d.settings)
+      if ('pin' in patch) {
+        if (patch.pin === null) setPinned(null)
+        else {
+          const m = messages.find((x) => x.id === patch.pin)
+          if (m) setPinned({ id: m.id, text: m.text, author: m.author })
+        }
+      }
     }
   }
 
   const inputDisabled = settings.locked && !canModerate
 
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden h-[440px] lg:h-full">
+    <div
+      className={
+        embedded
+          ? 'flex flex-col h-full min-h-0 bg-white'
+          : 'flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden h-[440px] lg:h-full'
+      }
+    >
       <div className="px-4 py-3 border-b border-gray-200 bg-navy-950 text-white">
         <div className="flex items-center justify-between gap-2">
           <p className="font-bold text-sm">💬 Chat ao vivo</p>
@@ -204,6 +225,30 @@ export default function LiveChat({
         )}
       </div>
 
+      {pinned && (
+        <div className="border-b border-gold-500/40 bg-gold-500/10 px-4 py-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold text-gold-600 uppercase">
+                📌 Fixado · {pinned.author}
+              </p>
+              <p className="text-sm text-navy-950 break-words whitespace-pre-line">
+                {pinned.text}
+              </p>
+            </div>
+            {canModerate && (
+              <button
+                onClick={() => updateSettings({ pin: null })}
+                className="text-[11px] text-gray-500 hover:text-red-600 shrink-0"
+                title="Desafixar"
+              >
+                ✕ desafixar
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div
         ref={listRef}
         onScroll={handleScroll}
@@ -229,13 +274,22 @@ export default function LiveChat({
                 {timeFormatter.format(new Date(m.createdAt))}
               </span>
               {canModerate && (
-                <button
-                  onClick={() => remove(m.id)}
-                  className="hidden group-hover:inline text-[11px] text-red-500 hover:underline"
-                  title="Apagar mensagem"
-                >
-                  apagar
-                </button>
+                <>
+                  <button
+                    onClick={() => updateSettings({ pin: m.id })}
+                    className="hidden group-hover:inline text-[11px] text-navy-700 hover:underline"
+                    title="Fixar no topo do chat"
+                  >
+                    📌 fixar
+                  </button>
+                  <button
+                    onClick={() => remove(m.id)}
+                    className="hidden group-hover:inline text-[11px] text-red-500 hover:underline"
+                    title="Apagar mensagem"
+                  >
+                    apagar
+                  </button>
+                </>
               )}
             </div>
             <p className="text-gray-700 break-words whitespace-pre-line">{m.text}</p>

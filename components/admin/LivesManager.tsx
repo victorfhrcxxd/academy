@@ -35,6 +35,7 @@ interface Day {
   scheduledAt: string
   endsAt: string | null
   embedUrl: string | null
+  restrictPlayer: boolean
   status: string
   talks: Talk[]
 }
@@ -100,6 +101,7 @@ export default function LivesManager({
   const [scheduledAt, setScheduledAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [embedUrl, setEmbedUrl] = useState('')
+  const [restrictPlayer, setRestrictPlayer] = useState(true)
 
   // ---- programação (palestras) ----
   const [openProgram, setOpenProgram] = useState<string | null>(null)
@@ -125,6 +127,7 @@ export default function LivesManager({
     setScheduledAt('')
     setEndsAt('')
     setEmbedUrl('')
+    setRestrictPlayer(true)
     setShowDayForm(true)
   }
 
@@ -136,6 +139,7 @@ export default function LivesManager({
     setScheduledAt(toLocalInputValue(d.scheduledAt))
     setEndsAt(d.endsAt ? toLocalInputValue(d.endsAt) : '')
     setEmbedUrl(d.embedUrl || '')
+    setRestrictPlayer(d.restrictPlayer)
     setShowDayForm(true)
   }
 
@@ -149,6 +153,7 @@ export default function LivesManager({
         scheduledAt: new Date(scheduledAt),
         endsAt: endsAt ? new Date(endsAt) : undefined,
         embedUrl: embedUrl || '',
+        restrictPlayer,
       }
       const res = editingDay
         ? await updateLive(editingDay.id, payload)
@@ -354,6 +359,26 @@ export default function LivesManager({
               rows={2}
               className={inputCls}
             />
+          </div>
+          <div className="md:col-span-2">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={restrictPlayer}
+                onChange={(e) => setRestrictPlayer(e.target.checked)}
+                className="mt-1 h-4 w-4 accent-navy-950"
+              />
+              <span className="text-sm">
+                <span className="font-medium text-navy-950">
+                  Player protegido (recomendado)
+                </span>
+                <span className="block text-xs text-gray-500">
+                  Esconde o título e os controles do YouTube e impede o aluno de pausar
+                  ou clicar no vídeo. O aluno usa os controles da plataforma (som,
+                  volume, tela cheia). Vale só para links do YouTube.
+                </span>
+              </span>
+            </label>
           </div>
           <div className="md:col-span-2 flex gap-3">
             <button

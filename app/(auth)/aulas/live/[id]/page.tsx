@@ -3,9 +3,9 @@ import { getServerSession } from 'next-auth'
 import { notFound, redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { toEmbedUrl } from '@/lib/embed'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import LiveChat from '@/components/LiveChat'
+import ProtectedPlayer from '@/components/ProtectedPlayer'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'long',
@@ -69,17 +69,11 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
       <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] items-start">
         <div>
           {live.embedUrl ? (
-            <div className="rounded-2xl overflow-hidden border border-gray-200 bg-black shadow-sm">
-              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-                <iframe
-                  src={toEmbedUrl(live.embedUrl)}
-                  className="absolute inset-0 h-full w-full"
-                  allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                  allowFullScreen
-                  title={live.title}
-                />
-              </div>
-            </div>
+            <ProtectedPlayer
+              embedUrl={live.embedUrl}
+              restricted={live.restrictPlayer}
+              title={live.title}
+            />
           ) : (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-16 text-center flex flex-col items-center justify-center">
               <p className="text-4xl mb-4">🎥</p>

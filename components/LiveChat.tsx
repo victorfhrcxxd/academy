@@ -28,6 +28,8 @@ export default function LiveChat({
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [settings, setSettings] = useState({ locked: false, slowMode: 0 })
+  const [displayName, setDisplayName] = useState('')
+  const [showNameInput, setShowNameInput] = useState(false)
   const listRef = useRef<HTMLDivElement>(null)
   const lastAtRef = useRef<string | null>(null)
   const stickToBottomRef = useRef(true)
@@ -64,6 +66,18 @@ export default function LiveChat({
     return () => clearInterval(t)
   }, [fetchMessages])
 
+  // nome de exibição do admin fica salvo no navegador
+  useEffect(() => {
+    if (canModerate) {
+      setDisplayName(localStorage.getItem('valeriote-chat-name') || '')
+    }
+  }, [canModerate])
+
+  const saveDisplayName = (name: string) => {
+    setDisplayName(name)
+    localStorage.setItem('valeriote-chat-name', name)
+  }
+
   const handleScroll = () => {
     const el = listRef.current
     if (!el) return
@@ -80,7 +94,10 @@ export default function LiveChat({
       const res = await fetch(`/api/chat/${liveId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: value }),
+        body: JSON.stringify({
+          text: value,
+          ...(canModerate && displayName ? { displayName } : {}),
+        }),
       })
       if (!res.ok) {
         const d = await res.json().catch(() => null)
@@ -153,6 +170,37 @@ export default function LiveChat({
           <p className="text-[11px] text-white/60 mt-1">
             Modo lento ativo: 1 mensagem a cada {settings.slowMode}s
           </p>
+        )}
+        {canModerate && (
+          <div className="mt-2">
+            {showNameInput ? (
+              <div className="flex gap-2">
+                <input
+                  value={displayName}
+                  onChange={(e) => saveDisplayName(e.target.value)}
+                  maxLength={60}
+                  placeholder="Ex.: Equipe Valeriote"
+                  className="flex-1 rounded bg-navy-800 border border-white/20 px-2 py-1 text-xs text-white placeholder:text-white/40"
+                />
+                <button
+                  onClick={() => setShowNameInput(false)}
+                  className="rounded bg-gold-500 text-navy-950 px-2 py-1 text-xs font-bold"
+                >
+                  OK
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowNameInput(true)}
+                className="text-[11px] text-white/60 hover:text-white"
+              >
+                ✎ Aparecer no chat como:{' '}
+                <span className="font-bold text-gold-400">
+                  {displayName || 'seu nome real'}
+                </span>
+              </button>
+            )}
+          </div>
         )}
       </div>
 

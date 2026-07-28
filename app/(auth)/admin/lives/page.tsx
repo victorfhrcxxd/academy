@@ -29,6 +29,7 @@ export default async function AdminLivesPage() {
     scheduledAt: l.scheduledAt.toISOString(),
     endsAt: l.endsAt ? l.endsAt.toISOString() : null,
     embedUrl: l.embedUrl,
+    restrictPlayer: l.restrictPlayer,
     status: l.status,
     talks: l.talks.map((t) => ({
       id: t.id,

@@ -56,8 +56,9 @@ model Live {
   endsAt       DateTime? // término previsto
   embedUrl     String?
   status       String    @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
-  chatLocked   Boolean   @default(false) // chat bloqueado pela equipe
-  chatSlowMode Int       @default(0) // modo lento: segundos entre mensagens por aluno (0 = off)
+  chatLocked     Boolean @default(false) // chat bloqueado pela equipe
+  chatSlowMode   Int     @default(0) // modo lento: segundos entre mensagens por aluno (0 = off)
+  restrictPlayer Boolean @default(false) // player protegido: oculta título/controles do YouTube e impede pausar
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -89,11 +90,12 @@ model Talk {
 
 // Mensagem do chat ao vivo de um dia do evento
 model ChatMessage {
-  id        String   @id @default(cuid())
-  liveId    String
-  userId    String
-  text      String
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  liveId      String
+  userId      String
+  text        String
+  displayName String? // nome de exibição escolhido (só admins podem definir)
+  createdAt   DateTime @default(now())
 
   live Live @relation(fields: [liveId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

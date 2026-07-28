@@ -31,6 +31,7 @@ export const liveSchema = z.object({
     .url('Link inválido — use a URL completa (https://...)')
     .optional()
     .or(z.literal('')),
+  restrictPlayer: z.boolean().optional(),
 }).refine((d) => !d.endsAt || d.endsAt > d.scheduledAt, {
   message: 'O término deve ser depois do início',
   path: ['endsAt'],

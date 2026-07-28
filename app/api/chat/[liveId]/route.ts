@@ -54,7 +54,7 @@ export async function GET(
       id: m.id,
       text: m.text,
       createdAt: m.createdAt.toISOString(),
-      author: m.user.name,
+      author: m.displayName || m.user.name,
       isAdmin: m.user.role === 'ADMIN',
       mine: m.userId === auth.session.user.id,
     })),
@@ -79,6 +79,12 @@ export async function POST(
 
   const body = await req.json().catch(() => null)
   const text = typeof body?.text === 'string' ? body.text.trim() : ''
+
+  // Nome de exibição customizado: só admins podem usar
+  const displayName =
+    isAdmin && typeof body?.displayName === 'string'
+      ? body.displayName.trim().slice(0, 60)
+      : ''
 
   if (!text) {
     return NextResponse.json({ error: 'Mensagem vazia' }, { status: 400 })
@@ -107,7 +113,7 @@ export async function POST(
   }
 
   const message = await prisma.chatMessage.create({
-    data: { liveId, userId: session.user.id, text },
+    data: { liveId, userId: session.user.id, text, displayName: displayName || null },
   })
 
   return NextResponse.json({ ok: true, id: message.id, createdAt: message.createdAt.toISOString() })

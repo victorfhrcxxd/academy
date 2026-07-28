@@ -20,7 +20,7 @@ export async function createLive(formData: unknown): Promise<ActionResponse> {
       return { success: false, error: parsed.error.issues[0].message }
     }
 
-    const { courseId, title, description, scheduledAt, endsAt, embedUrl, restrictPlayer } =
+    const { courseId, title, description, scheduledAt, endsAt, embedUrl, replayUrl, restrictPlayer } =
       parsed.data
 
     await prisma.live.create({
@@ -31,6 +31,7 @@ export async function createLive(formData: unknown): Promise<ActionResponse> {
         scheduledAt,
         endsAt: endsAt || null,
         embedUrl: embedUrl || null,
+        replayUrl: replayUrl || null,
         restrictPlayer: restrictPlayer ?? false,
       },
     })
@@ -55,7 +56,7 @@ export async function updateLive(
       return { success: false, error: parsed.error.issues[0].message }
     }
 
-    const { courseId, title, description, scheduledAt, endsAt, embedUrl, restrictPlayer } =
+    const { courseId, title, description, scheduledAt, endsAt, embedUrl, replayUrl, restrictPlayer } =
       parsed.data
 
     await prisma.live.update({
@@ -67,6 +68,7 @@ export async function updateLive(
         scheduledAt,
         endsAt: endsAt || null,
         embedUrl: embedUrl || null,
+        replayUrl: replayUrl || null,
         restrictPlayer: restrictPlayer ?? false,
       },
     })

@@ -93,7 +93,11 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                     : 'bg-navy-950 hover:bg-navy-900 text-white'
                 }`}
               >
-                {day.status === 'LIVE' ? '● Assistir ao vivo' : 'Entrar na transmissão'}
+                {day.status === 'LIVE'
+                  ? '● Assistir ao vivo'
+                  : day.status === 'ENDED' && day.replayUrl
+                    ? '🎬 Assistir gravação'
+                    : 'Entrar na transmissão'}
               </Link>
             </div>
 

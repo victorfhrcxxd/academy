@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import LiveChat from '@/components/LiveChat'
 import ProtectedPlayer from '@/components/ProtectedPlayer'
+import AttendanceTracker from '@/components/AttendanceTracker'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'long',
@@ -45,9 +46,14 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
   }
 
   const isAdmin = session.user.role === 'ADMIN'
+  // Encerrou e tem gravação → mostra o replay no lugar da live
+  const showReplay = live.status === 'ENDED' && !!live.replayUrl
+  const playerUrl = showReplay ? live.replayUrl : live.embedUrl
 
   return (
     <div className="mx-auto max-w-[1800px]">
+      {/* registra presença do aluno enquanto assiste */}
+      {!isAdmin && <AttendanceTracker liveId={live.id} />}
       <Link
         href={isAdmin ? '/admin/lives' : `/aulas/curso/${live.courseId}`}
         className="text-sm text-navy-700 hover:underline"
@@ -59,6 +65,11 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-navy-950">{live.title}</h1>
           <LiveStatusBadge status={live.status} />
+          {showReplay && (
+            <span className="rounded-full bg-navy-900/10 text-navy-900 px-3 py-1 text-xs font-bold">
+              🎬 Gravação
+            </span>
+          )}
         </div>
         <p className="text-gray-500 mt-1">
           {live.course.title} · {dateFormatter.format(live.scheduledAt)}
@@ -68,9 +79,9 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
 
       <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] items-start">
         <div>
-          {live.embedUrl ? (
+          {playerUrl ? (
             <ProtectedPlayer
-              embedUrl={live.embedUrl}
+              embedUrl={playerUrl}
               restricted={live.restrictPlayer}
               title={live.title}
             />

@@ -10,6 +10,10 @@ export default async function AdminLivesPage() {
       include: {
         course: { select: { title: true } },
         talks: { orderBy: { startsAt: 'asc' } },
+        attendances: {
+          include: { user: { select: { name: true, email: true } } },
+          orderBy: { watchSeconds: 'desc' },
+        },
       },
       orderBy: { scheduledAt: 'asc' },
     }),
@@ -29,8 +33,15 @@ export default async function AdminLivesPage() {
     scheduledAt: l.scheduledAt.toISOString(),
     endsAt: l.endsAt ? l.endsAt.toISOString() : null,
     embedUrl: l.embedUrl,
+    replayUrl: l.replayUrl,
     restrictPlayer: l.restrictPlayer,
     status: l.status,
+    attendances: l.attendances.map((a) => ({
+      name: a.user.name,
+      email: a.user.email,
+      minutes: Math.round(a.watchSeconds / 60),
+      lastSeenAt: a.lastSeenAt.toISOString(),
+    })),
     talks: l.talks.map((t) => ({
       id: t.id,
       title: t.title,

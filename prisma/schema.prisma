@@ -25,9 +25,25 @@ model User {
 
   enrollments  Enrollment[]
   chatMessages ChatMessage[]
+  attendances  Attendance[]
+  resetTokens  PasswordResetToken[]
 
   @@index([role])
   @@index([status])
+}
+
+// Token de recuperação de senha (link enviado por email, validade 1h)
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Curso presencial que terá transmissões ao vivo
@@ -55,6 +71,7 @@ model Live {
   scheduledAt  DateTime // início da transmissão do dia
   endsAt       DateTime? // término previsto
   embedUrl     String?
+  replayUrl    String? // gravação (VOD) liberada depois que o dia encerra
   status       String    @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
   chatLocked     Boolean @default(false) // chat bloqueado pela equipe
   chatSlowMode   Int     @default(0) // modo lento: segundos entre mensagens por aluno (0 = off)
@@ -62,12 +79,29 @@ model Live {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  course   Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  talks    Talk[]
-  messages ChatMessage[]
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  talks       Talk[]
+  messages    ChatMessage[]
+  attendances Attendance[]
 
   @@index([courseId])
   @@index([status])
+}
+
+// Presença: quanto tempo cada aluno assistiu à transmissão de um dia
+model Attendance {
+  id           String   @id @default(cuid())
+  userId       String
+  liveId       String
+  watchSeconds Int      @default(0)
+  firstSeenAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  live Live @relation(fields: [liveId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, liveId])
+  @@index([liveId])
 }
 
 // Palestra da programação de um dia do evento

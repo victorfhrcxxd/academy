@@ -65,7 +65,9 @@ export default async function LoginPage() {
           </div>
 
           <p className="text-center text-sm text-gray-500 mt-6">
-            Esqueceu a senha? Fale com um administrador.
+            <a href="/esqueci-senha" className="font-medium text-navy-900 hover:underline">
+              Esqueceu a senha?
+            </a>
           </p>
 
           <p className="text-center text-xs text-gray-400 mt-10">

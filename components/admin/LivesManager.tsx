@@ -26,6 +26,13 @@ interface Talk {
   description: string | null
 }
 
+interface AttendanceRow {
+  name: string
+  email: string
+  minutes: number
+  lastSeenAt: string
+}
+
 interface Day {
   id: string
   courseId: string
@@ -35,9 +42,11 @@ interface Day {
   scheduledAt: string
   endsAt: string | null
   embedUrl: string | null
+  replayUrl: string | null
   restrictPlayer: boolean
   status: string
   talks: Talk[]
+  attendances: AttendanceRow[]
 }
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -101,7 +110,9 @@ export default function LivesManager({
   const [scheduledAt, setScheduledAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [embedUrl, setEmbedUrl] = useState('')
+  const [replayUrl, setReplayUrl] = useState('')
   const [restrictPlayer, setRestrictPlayer] = useState(true)
+  const [openPresence, setOpenPresence] = useState<string | null>(null)
 
   // ---- programação (palestras) ----
   const [openProgram, setOpenProgram] = useState<string | null>(null)
@@ -127,6 +138,7 @@ export default function LivesManager({
     setScheduledAt('')
     setEndsAt('')
     setEmbedUrl('')
+    setReplayUrl('')
     setRestrictPlayer(true)
     setShowDayForm(true)
   }
@@ -139,16 +151,17 @@ export default function LivesManager({
     setScheduledAt(toLocalInputValue(d.scheduledAt))
     setEndsAt(d.endsAt ? toLocalInputValue(d.endsAt) : '')
     setEmbedUrl(d.embedUrl || '')
+    setReplayUrl(d.replayUrl || '')
     setRestrictPlayer(d.restrictPlayer)
     setShowDayForm(true)
   }
 
+  // aceita código embed colado inteiro (<iframe src="...">) e extrai só a URL
+  const cleanUrl = (v: string) =>
+    v.includes('<iframe') ? v.match(/src=["']([^"']+)["']/)?.[1] || v : v.trim()
+
   const submitDay = (e: React.FormEvent) => {
     e.preventDefault()
-    // aceita código embed colado inteiro (<iframe src="...">) e extrai só a URL
-    const cleanEmbed = embedUrl.includes('<iframe')
-      ? embedUrl.match(/src=["']([^"']+)["']/)?.[1] || embedUrl
-      : embedUrl.trim()
     startTransition(async () => {
       const payload = {
         courseId,
@@ -156,7 +169,8 @@ export default function LivesManager({
         description: dayDescription || undefined,
         scheduledAt: new Date(scheduledAt),
         endsAt: endsAt ? new Date(endsAt) : undefined,
-        embedUrl: cleanEmbed || '',
+        embedUrl: cleanUrl(embedUrl) || '',
+        replayUrl: cleanUrl(replayUrl) || '',
         restrictPlayer,
       }
       const res = editingDay
@@ -355,6 +369,19 @@ export default function LivesManager({
               embed completo de plataformas como Panda Video — colamos e extraímos a URL.
             </p>
           </div>
+          <div>
+            <label className={labelCls}>Link da gravação / replay (opcional)</label>
+            <input
+              value={replayUrl}
+              onChange={(e) => setReplayUrl(e.target.value)}
+              className={inputCls}
+              placeholder="Cole depois que o dia terminar"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Quando o dia estiver <b>Encerrado</b> e este link preenchido, o aluno vê a
+              gravação no lugar da transmissão (botão &quot;Assistir gravação&quot;).
+            </p>
+          </div>
           <div className="md:col-span-2">
             <label className={labelCls}>Descrição (opcional)</label>
             <textarea
@@ -421,6 +448,9 @@ export default function LivesManager({
                   {!d.embedUrl && (
                     <span className="ml-2 text-amber-600 font-medium">· sem link ainda</span>
                   )}
+                  {d.replayUrl && (
+                    <span className="ml-2 text-green-700 font-medium">· 🎬 replay ok</span>
+                  )}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 text-xs font-medium">
@@ -475,8 +505,57 @@ export default function LivesManager({
                 >
                   🗓 Programação ({d.talks.length})
                 </button>
+                <button
+                  onClick={() => setOpenPresence(openPresence === d.id ? null : d.id)}
+                  className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
+                >
+                  👥 Presenças ({d.attendances.length})
+                </button>
               </div>
             </div>
+
+            {openPresence === d.id && (
+              <div className="border-t border-gray-100 p-5">
+                <p className="text-xs font-bold uppercase text-gray-400 mb-3">
+                  Presenças em {d.title}
+                </p>
+                {d.attendances.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Nenhum aluno assistiu a este dia ainda.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-gray-500 border-b border-gray-200">
+                          <th className="py-2 pr-4 font-medium">Aluno</th>
+                          <th className="py-2 pr-4 font-medium">Tempo assistido</th>
+                          <th className="py-2 font-medium">Visto por último</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {d.attendances.map((a) => (
+                          <tr key={a.email}>
+                            <td className="py-2 pr-4">
+                              <p className="font-medium text-navy-950">{a.name}</p>
+                              <p className="text-gray-500 text-xs">{a.email}</p>
+                            </td>
+                            <td className="py-2 pr-4 font-medium text-navy-950">
+                              {a.minutes < 60
+                                ? `${a.minutes} min`
+                                : `${Math.floor(a.minutes / 60)}h${String(a.minutes % 60).padStart(2, '0')}`}
+                            </td>
+                            <td className="py-2 text-gray-500">
+                              {dateFormatter.format(new Date(a.lastSeenAt))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
             {openProgram === d.id && (
               <div className="border-t border-gray-100 p-5">

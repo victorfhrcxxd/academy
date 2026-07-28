@@ -145,6 +145,10 @@ export default function LivesManager({
 
   const submitDay = (e: React.FormEvent) => {
     e.preventDefault()
+    // aceita código embed colado inteiro (<iframe src="...">) e extrai só a URL
+    const cleanEmbed = embedUrl.includes('<iframe')
+      ? embedUrl.match(/src=["']([^"']+)["']/)?.[1] || embedUrl
+      : embedUrl.trim()
     startTransition(async () => {
       const payload = {
         courseId,
@@ -152,7 +156,7 @@ export default function LivesManager({
         description: dayDescription || undefined,
         scheduledAt: new Date(scheduledAt),
         endsAt: endsAt ? new Date(endsAt) : undefined,
-        embedUrl: embedUrl || '',
+        embedUrl: cleanEmbed || '',
         restrictPlayer,
       }
       const res = editingDay
@@ -347,8 +351,8 @@ export default function LivesManager({
               placeholder="https://www.youtube.com/watch?v=... (pode colar depois)"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Pode colar o link normal do YouTube ou Vimeo — convertemos sozinhos pro
-              formato do player.
+              Aceita link normal do YouTube/Vimeo (convertemos sozinhos) ou o código
+              embed completo de plataformas como Panda Video — colamos e extraímos a URL.
             </p>
           </div>
           <div className="md:col-span-2">

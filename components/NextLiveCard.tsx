@@ -5,6 +5,7 @@ import Link from 'next/link'
 
 interface NextLive {
   id: string
+  courseId: string
   title: string
   courseTitle: string
   scheduledAt: string
@@ -29,7 +30,8 @@ function parts(ms: number) {
   }
 }
 
-// Card de destaque da próxima transmissão, com contagem regressiva grande
+// Card de destaque do EVENTO na página de cursos: contagem pro início
+// (a contagem de cada dia fica dentro da página do curso)
 export default function NextLiveCard() {
   const [next, setNext] = useState<NextLive | null>(null)
   const [now, setNow] = useState(() => Date.now())
@@ -65,8 +67,10 @@ export default function NextLiveCard() {
         <p className="text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-white animate-pulse" /> AO VIVO AGORA
         </p>
-        <h2 className="text-xl sm:text-2xl font-bold leading-snug mb-1">{next.title}</h2>
-        <p className="text-white/80 text-sm mb-5">{next.courseTitle}</p>
+        <h2 className="text-xl sm:text-2xl font-bold leading-snug mb-1">
+          {next.courseTitle}
+        </h2>
+        <p className="text-white/80 text-sm mb-5">{next.title}</p>
         <Link
           href={`/aulas/live/${next.id}`}
           className="inline-block rounded-xl bg-white text-red-700 font-black px-8 py-3 hover:bg-red-50 transition"
@@ -96,13 +100,13 @@ export default function NextLiveCard() {
       <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold tracking-widest text-gold-400 mb-2">
-            🗓 PRÓXIMA TRANSMISSÃO AO VIVO
+            🗓 SEU EVENTO COMEÇA EM
           </p>
-          <h2 className="text-lg sm:text-xl font-bold leading-snug mb-1 line-clamp-2">
-            {next.title}
+          <h2 className="text-lg sm:text-2xl font-bold leading-snug mb-1">
+            {next.courseTitle}
           </h2>
           <p className="text-white/70 text-sm">
-            {next.courseTitle} · {dateFormatter.format(new Date(next.scheduledAt))}
+            Início: {dateFormatter.format(new Date(next.scheduledAt))}
           </p>
         </div>
 
@@ -122,19 +126,19 @@ export default function NextLiveCard() {
           </div>
 
           <Link
-            href={`/aulas/live/${next.id}`}
+            href={`/aulas/curso/${next.courseId}`}
             className="hidden sm:inline-block rounded-xl bg-gold-500 hover:bg-gold-600 text-navy-950 font-bold px-6 py-3 transition"
           >
-            Ir para a sala →
+            Acessar curso →
           </Link>
         </div>
       </div>
 
       <Link
-        href={`/aulas/live/${next.id}`}
+        href={`/aulas/curso/${next.courseId}`}
         className="sm:hidden mt-5 block text-center rounded-xl bg-gold-500 hover:bg-gold-600 text-navy-950 font-bold px-6 py-3 transition"
       >
-        Ir para a sala →
+        Acessar curso →
       </Link>
     </div>
   )

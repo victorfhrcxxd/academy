@@ -42,6 +42,7 @@ export async function GET() {
   return NextResponse.json({
     next: {
       id: next.id,
+      courseId: next.courseId,
       title: next.title,
       courseTitle: next.course.title,
       scheduledAt: next.scheduledAt.toISOString(),

@@ -1,15 +1,14 @@
-export type SessionUser = {
+export interface ActionResponse<T = unknown> {
+  success: boolean
+  data?: T
+  error?: string
+  message?: string
+}
+
+export interface SessionUser {
   id: string
   email: string
   name: string
-  role: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN'
-  status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
-  avatarUrl?: string
-}
-
-export type ActionResponse<T = any> = {
-  success: boolean
-  message: string
-  data?: T
-  error?: string
+  role: 'ADMIN' | 'MEMBER'
+  status: 'ACTIVE' | 'INACTIVE'
 }

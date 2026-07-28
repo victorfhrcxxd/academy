@@ -17,39 +17,35 @@ export const authOptions: NextAuthOptions = {
         }
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: credentials.email.toLowerCase().trim() },
         })
 
         if (!user) {
-          throw new Error('Usuário não encontrado')
+          throw new Error('Email ou senha incorretos')
         }
 
-        if (user.status === 'SUSPENDED') {
-          throw new Error('Usuário suspenso')
+        if (user.status !== 'ACTIVE') {
+          throw new Error('Acesso desativado. Fale com um administrador.')
         }
 
         const isPasswordValid = await compare(credentials.password, user.password)
 
         if (!isPasswordValid) {
-          throw new Error('Senha incorreta')
+          throw new Error('Email ou senha incorretos')
         }
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
-          status: user.status,
-          avatarUrl: user.avatarUrl || undefined,
+          role: user.role as 'ADMIN' | 'MEMBER',
+          status: user.status as 'ACTIVE' | 'INACTIVE',
         }
       },
     }),
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 dias
-  },
-  jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 dias
   },
   pages: {
@@ -59,18 +55,16 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role
-        token.status = (user as any).status
-        token.avatarUrl = (user as any).avatarUrl
+        token.role = user.role
+        token.status = user.status
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub as string
-        session.user.role = token.role as 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN'
-        session.user.status = token.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
-        session.user.avatarUrl = token.avatarUrl as string | undefined
+        session.user.role = token.role as 'ADMIN' | 'MEMBER'
+        session.user.status = token.status as 'ACTIVE' | 'INACTIVE'
       }
       return session
     },

@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Valeriote Cursos — Plataforma de Aulas ao Vivo
 
-## Getting Started
+Área de membros para transmissão **ao vivo** dos cursos presenciais da Valeriote.
+Não há venda de cursos na plataforma: o admin cadastra os alunos que já se
+inscreveram no curso presencial, e esses alunos acessam as lives pela área de membros.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router, Turbopack) + React 19 + TypeScript
+- Tailwind CSS v4
+- NextAuth (credentials) — papéis `ADMIN` e `MEMBER`
+- Prisma 6 + SQLite local (`prisma/dev.db`)
+
+## Rodando localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx prisma db push          # cria o banco
+node prisma/seed.js         # cria o admin (email/senha padrão no script)
+npm run dev                 # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variáveis em `.env` (DATABASE_URL) e `.env.local` (NEXTAUTH_URL, NEXTAUTH_SECRET).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estrutura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/login` — página de login (único acesso público)
+- `/aulas` — área do aluno: cursos matriculados e agenda de lives
+- `/aulas/live/[id]` — player da transmissão (iframe embed configurável por aula)
+- `/admin` — dashboard do administrador
+- `/admin/membros` — cadastrar/ativar/desativar alunos, matrículas, senha
+- `/admin/cursos` — cursos presenciais (turmas)
+- `/admin/lives` — agendar aulas, colar link da transmissão, iniciar/encerrar
 
-## Learn More
+## Fluxo de uso
 
-To learn more about Next.js, take a look at the following resources:
+1. Admin cria o **curso** (turma presencial).
+2. Admin cadastra os **alunos** e marca em quais cursos estão matriculados.
+3. Admin agenda as **aulas ao vivo**; quando for transmitir, cola o link de
+   embed da plataforma escolhida (YouTube, Vimeo, etc.) e clica em **Iniciar**.
+4. Aluno faz login e assiste em `/aulas`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> A plataforma de transmissão ainda não foi definida — o campo `embedUrl` aceita
+> qualquer URL de incorporação, então a escolha pode ser feita depois sem mudar código.

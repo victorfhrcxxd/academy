@@ -10,19 +10,14 @@
     "postinstall": "npx prisma generate"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
-    "axios": "^1.18.1",
+    "@prisma/client": "^6",
     "bcryptjs": "^3.0.3",
-    "dotenv-cli": "^11.0.0",
     "next": "16.2.9",
     "next-auth": "^4.24.14",
-    "pg": "^8.22.0",
-    "prisma": "^7.8.0",
+    "prisma": "^6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.80.0",
-    "resend": "^6.16.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -1,14 +1,17 @@
 import { prisma } from '@/lib/db'
 import LivesManager from '@/components/admin/LivesManager'
 
-export const metadata = { title: 'Aulas ao vivo — Admin Valeriote' }
+export const metadata = { title: 'Transmissões — Admin Valeriote' }
 export const dynamic = 'force-dynamic'
 
 export default async function AdminLivesPage() {
   const [lives, courses] = await Promise.all([
     prisma.live.findMany({
-      include: { course: { select: { title: true } } },
-      orderBy: { scheduledAt: 'desc' },
+      include: {
+        course: { select: { title: true } },
+        talks: { orderBy: { startsAt: 'asc' } },
+      },
+      orderBy: { scheduledAt: 'asc' },
     }),
     prisma.course.findMany({
       where: { status: 'ACTIVE' },
@@ -23,13 +26,20 @@ export default async function AdminLivesPage() {
     courseTitle: l.course.title,
     title: l.title,
     description: l.description,
-    speakerName: l.speakerName,
-    speakerPhoto: l.speakerPhoto,
     scheduledAt: l.scheduledAt.toISOString(),
     endsAt: l.endsAt ? l.endsAt.toISOString() : null,
     embedUrl: l.embedUrl,
     status: l.status,
+    talks: l.talks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      speakerName: t.speakerName,
+      speakerPhoto: t.speakerPhoto,
+      startsAt: t.startsAt.toISOString(),
+      endsAt: t.endsAt ? t.endsAt.toISOString() : null,
+      description: t.description,
+    })),
   }))
 
-  return <LivesManager lives={plain} courses={courses} />
+  return <LivesManager days={plain} courses={courses} />
 }

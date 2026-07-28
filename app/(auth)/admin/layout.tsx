@@ -9,7 +9,7 @@ const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
   { href: '/admin/membros', label: 'Alunos', icon: '👥' },
   { href: '/admin/cursos', label: 'Cursos', icon: '🎓' },
-  { href: '/admin/lives', label: 'Palestras', icon: '🎥' },
+  { href: '/admin/lives', label: 'Transmissões', icon: '🎥' },
 ]
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

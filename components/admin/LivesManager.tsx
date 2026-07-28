@@ -8,6 +8,7 @@ import {
   setLiveStatus,
   deleteLive,
 } from '@/server/actions/live-actions'
+import { createTalk, updateTalk, deleteTalk } from '@/server/actions/talk-actions'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 
 interface Course {
@@ -15,24 +16,49 @@ interface Course {
   title: string
 }
 
-interface Live {
+interface Talk {
+  id: string
+  title: string
+  speakerName: string | null
+  speakerPhoto: string | null
+  startsAt: string
+  endsAt: string | null
+  description: string | null
+}
+
+interface Day {
   id: string
   courseId: string
   courseTitle: string
   title: string
   description: string | null
-  speakerName: string | null
-  speakerPhoto: string | null
   scheduledAt: string
   endsAt: string | null
   embedUrl: string | null
   status: string
+  talks: Talk[]
 }
 
-const endTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'short',
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
 })
+
+const timeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+// datetime-local espera "YYYY-MM-DDTHH:mm" no horário local
+function toLocalInputValue(iso: string) {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 // Redimensiona a foto no navegador (máx. 320px) e devolve como data URL
 function resizePhoto(file: File): Promise<string> {
@@ -52,117 +78,169 @@ function resizePhoto(file: File): Promise<string> {
   })
 }
 
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
-  weekday: 'short',
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
-
-// datetime-local espera "YYYY-MM-DDTHH:mm" no horário local
-function toLocalInputValue(iso: string) {
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
+const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm'
+const labelCls = 'block text-sm font-medium text-navy-950 mb-1.5'
 
 export default function LivesManager({
-  lives,
+  days,
   courses,
 }: {
-  lives: Live[]
+  days: Day[]
   courses: Course[]
 }) {
-  const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<Live | null>(null)
+  const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  // ---- formulário do DIA ----
+  const [showDayForm, setShowDayForm] = useState(false)
+  const [editingDay, setEditingDay] = useState<Day | null>(null)
   const [courseId, setCourseId] = useState('')
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [speakerName, setSpeakerName] = useState('')
-  const [speakerPhoto, setSpeakerPhoto] = useState('')
+  const [dayTitle, setDayTitle] = useState('')
+  const [dayDescription, setDayDescription] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [endsAt, setEndsAt] = useState('')
   const [embedUrl, setEmbedUrl] = useState('')
-  const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
-  const [isPending, startTransition] = useTransition()
+
+  // ---- programação (palestras) ----
+  const [openProgram, setOpenProgram] = useState<string | null>(null)
+  const [editingTalk, setEditingTalk] = useState<Talk | null>(null)
+  const [showTalkForm, setShowTalkForm] = useState(false)
+  const [tTitle, setTTitle] = useState('')
+  const [tSpeaker, setTSpeaker] = useState('')
+  const [tPhoto, setTPhoto] = useState('')
+  const [tStart, setTStart] = useState('')
+  const [tEnd, setTEnd] = useState('')
+  const [tDesc, setTDesc] = useState('')
 
   const notify = (ok: boolean, text: string) => {
     setFeedback({ ok, text })
     setTimeout(() => setFeedback(null), 4000)
   }
 
-  const openCreate = () => {
-    setEditing(null)
+  const openCreateDay = () => {
+    setEditingDay(null)
     setCourseId(courses[0]?.id || '')
-    setTitle('')
-    setDescription('')
-    setSpeakerName('')
-    setSpeakerPhoto('')
+    setDayTitle(`Dia ${days.length + 1}`)
+    setDayDescription('')
     setScheduledAt('')
     setEndsAt('')
     setEmbedUrl('')
-    setShowForm(true)
+    setShowDayForm(true)
   }
 
-  const openEdit = (l: Live) => {
-    setEditing(l)
-    setCourseId(l.courseId)
-    setTitle(l.title)
-    setDescription(l.description || '')
-    setSpeakerName(l.speakerName || '')
-    setSpeakerPhoto(l.speakerPhoto || '')
-    setScheduledAt(toLocalInputValue(l.scheduledAt))
-    setEndsAt(l.endsAt ? toLocalInputValue(l.endsAt) : '')
-    setEmbedUrl(l.embedUrl || '')
-    setShowForm(true)
+  const openEditDay = (d: Day) => {
+    setEditingDay(d)
+    setCourseId(d.courseId)
+    setDayTitle(d.title)
+    setDayDescription(d.description || '')
+    setScheduledAt(toLocalInputValue(d.scheduledAt))
+    setEndsAt(d.endsAt ? toLocalInputValue(d.endsAt) : '')
+    setEmbedUrl(d.embedUrl || '')
+    setShowDayForm(true)
   }
 
-  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    try {
-      setSpeakerPhoto(await resizePhoto(file))
-    } catch {
-      notify(false, 'Não foi possível ler a imagem')
-    }
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const submitDay = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
       const payload = {
         courseId,
-        title,
-        description: description || undefined,
-        speakerName: speakerName || undefined,
-        speakerPhoto: speakerPhoto || '',
+        title: dayTitle,
+        description: dayDescription || undefined,
         scheduledAt: new Date(scheduledAt),
         endsAt: endsAt ? new Date(endsAt) : undefined,
         embedUrl: embedUrl || '',
       }
-      const res = editing ? await updateLive(editing.id, payload) : await createLive(payload)
+      const res = editingDay
+        ? await updateLive(editingDay.id, payload)
+        : await createLive(payload)
       if (res.success) {
         notify(true, res.message || 'Salvo')
-        setShowForm(false)
+        setShowDayForm(false)
       } else {
         notify(false, res.error || 'Erro ao salvar')
       }
     })
   }
 
-  const handleStatus = (l: Live, status: 'SCHEDULED' | 'LIVE' | 'ENDED') =>
+  const handleStatus = (d: Day, status: 'SCHEDULED' | 'LIVE' | 'ENDED') =>
     startTransition(async () => {
-      const res = await setLiveStatus(l.id, status)
+      const res = await setLiveStatus(d.id, status)
       if (!res.success) notify(false, res.error || 'Erro')
     })
 
-  const handleDelete = (l: Live) => {
-    if (!confirm(`Excluir a palestra "${l.title}"?`)) return
+  const handleDeleteDay = (d: Day) => {
+    if (!confirm(`Excluir "${d.title}"? A programação e o chat desse dia também somem.`))
+      return
     startTransition(async () => {
-      const res = await deleteLive(l.id)
-      notify(res.success, res.success ? 'Palestra excluída' : res.error || 'Erro')
+      const res = await deleteLive(d.id)
+      notify(res.success, res.success ? 'Dia excluído' : res.error || 'Erro')
+    })
+  }
+
+  // ---- palestras ----
+  const openCreateTalk = (dayId: string) => {
+    setEditingTalk(null)
+    setTTitle('')
+    setTSpeaker('')
+    setTPhoto('')
+    setTStart('')
+    setTEnd('')
+    setTDesc('')
+    setOpenProgram(dayId)
+    setShowTalkForm(true)
+  }
+
+  const openEditTalk = (dayId: string, t: Talk) => {
+    setEditingTalk(t)
+    setTTitle(t.title)
+    setTSpeaker(t.speakerName || '')
+    setTPhoto(t.speakerPhoto || '')
+    setTStart(toLocalInputValue(t.startsAt))
+    setTEnd(t.endsAt ? toLocalInputValue(t.endsAt) : '')
+    setTDesc(t.description || '')
+    setOpenProgram(dayId)
+    setShowTalkForm(true)
+  }
+
+  const handleTalkPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setTPhoto(await resizePhoto(file))
+    } catch {
+      notify(false, 'Não foi possível ler a imagem')
+    }
+  }
+
+  const submitTalk = (e: React.FormEvent, dayId: string) => {
+    e.preventDefault()
+    startTransition(async () => {
+      const payload = {
+        liveId: dayId,
+        title: tTitle,
+        speakerName: tSpeaker || undefined,
+        speakerPhoto: tPhoto || '',
+        startsAt: new Date(tStart),
+        endsAt: tEnd ? new Date(tEnd) : undefined,
+        description: tDesc || undefined,
+      }
+      const res = editingTalk
+        ? await updateTalk(editingTalk.id, payload)
+        : await createTalk(payload)
+      if (res.success) {
+        notify(true, res.message || 'Salvo')
+        setShowTalkForm(false)
+      } else {
+        notify(false, res.error || 'Erro ao salvar palestra')
+      }
+    })
+  }
+
+  const handleDeleteTalk = (t: Talk) => {
+    if (!confirm(`Remover a palestra "${t.title}" da programação?`)) return
+    startTransition(async () => {
+      const res = await deleteTalk(t.id)
+      notify(res.success, res.success ? 'Palestra removida' : res.error || 'Erro')
     })
   }
 
@@ -170,23 +248,24 @@ export default function LivesManager({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-navy-950">Palestras ao vivo</h1>
+          <h1 className="text-2xl font-bold text-navy-950">Transmissões</h1>
           <p className="text-sm text-gray-500">
-            Agende as palestras do evento e cole o link da transmissão quando for transmitir.
+            Um dia do evento = uma transmissão ao vivo. Dentro de cada dia, monte a
+            programação de palestras.
           </p>
         </div>
         <button
-          onClick={openCreate}
+          onClick={openCreateDay}
           disabled={courses.length === 0}
           className="rounded-lg bg-gold-500 hover:bg-gold-600 px-5 py-2.5 text-sm font-bold text-navy-950 transition disabled:opacity-50"
         >
-          + Agendar palestra
+          + Agendar dia
         </button>
       </div>
 
       {courses.length === 0 && (
         <p className="mb-4 text-sm text-gray-500">
-          Crie um curso primeiro para poder agendar palestras.
+          Crie um curso primeiro para poder agendar os dias do evento.
         </p>
       )}
 
@@ -202,18 +281,18 @@ export default function LivesManager({
         </div>
       )}
 
-      {showForm && (
+      {showDayForm && (
         <form
-          onSubmit={handleSubmit}
+          onSubmit={submitDay}
           className="mb-8 rounded-2xl bg-white border border-gray-200 p-6 grid gap-4 md:grid-cols-2"
         >
           <div>
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">Curso</label>
+            <label className={labelCls}>Curso</label>
             <select
               value={courseId}
               onChange={(e) => setCourseId(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+              className={`${inputCls} bg-white`}
             >
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -223,113 +302,57 @@ export default function LivesManager({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Tema da palestra
-            </label>
+            <label className={labelCls}>Título do dia</label>
             <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={dayTitle}
+              onChange={(e) => setDayTitle(e.target.value)}
               required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              placeholder="Ex.: Fiscalização de contratos na prática"
+              className={inputCls}
+              placeholder="Ex.: Dia 1"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Professor palestrante
-            </label>
-            <input
-              value={speakerName}
-              onChange={(e) => setSpeakerName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              placeholder="Ex.: Jacoby Fernandes"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Foto do palestrante
-            </label>
-            <div className="flex items-center gap-3">
-              {speakerPhoto ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={speakerPhoto}
-                  alt="Foto do palestrante"
-                  className="h-12 w-12 rounded-full object-cover border border-gray-200"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                  👤
-                </div>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhoto}
-                className="text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-navy-950 file:px-3 file:py-1.5 file:text-white file:text-xs file:font-bold file:cursor-pointer"
-              />
-              {speakerPhoto && (
-                <button
-                  type="button"
-                  onClick={() => setSpeakerPhoto('')}
-                  className="text-xs text-red-600 hover:underline"
-                >
-                  remover
-                </button>
-              )}
-            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-navy-950 mb-1.5">
-                Início
-              </label>
+              <label className={labelCls}>Início</label>
               <input
                 type="datetime-local"
                 value={scheduledAt}
                 onChange={(e) => setScheduledAt(e.target.value)}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={inputCls}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-navy-950 mb-1.5">
-                Término
-              </label>
+              <label className={labelCls}>Término</label>
               <input
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
                 min={scheduledAt || undefined}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className={inputCls}
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Link da transmissão (opcional)
-            </label>
+            <label className={labelCls}>Link da transmissão (opcional)</label>
             <input
               value={embedUrl}
               onChange={(e) => setEmbedUrl(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className={inputCls}
               placeholder="https://www.youtube.com/watch?v=... (pode colar depois)"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Pode colar o link normal do YouTube ou Vimeo (do jeito que copiar do
-              navegador) — a plataforma converte sozinha pro formato do player.
-              Dá pra deixar vazio e preencher na hora.
+              Pode colar o link normal do YouTube ou Vimeo — convertemos sozinhos pro
+              formato do player.
             </p>
           </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Descrição (opcional)
-            </label>
+            <label className={labelCls}>Descrição (opcional)</label>
             <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={dayDescription}
+              onChange={(e) => setDayDescription(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              className={inputCls}
             />
           </div>
           <div className="md:col-span-2 flex gap-3">
@@ -338,11 +361,11 @@ export default function LivesManager({
               disabled={isPending}
               className="rounded-lg bg-navy-950 hover:bg-navy-900 px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-60"
             >
-              {isPending ? 'Salvando...' : editing ? 'Salvar alterações' : 'Agendar palestra'}
+              {isPending ? 'Salvando...' : editingDay ? 'Salvar alterações' : 'Agendar dia'}
             </button>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={() => setShowDayForm(false)}
               className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm"
             >
               Cancelar
@@ -351,87 +374,260 @@ export default function LivesManager({
         </form>
       )}
 
-      <div className="space-y-3">
-        {lives.length === 0 && (
-          <p className="text-gray-500 text-sm">Nenhuma palestra agendada ainda.</p>
+      <div className="space-y-4">
+        {days.length === 0 && (
+          <p className="text-gray-500 text-sm">Nenhum dia agendado ainda.</p>
         )}
-        {lives.map((l) => (
-          <div
-            key={l.id}
-            className="rounded-2xl bg-white border border-gray-200 p-5 flex flex-wrap items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              {l.speakerPhoto ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={l.speakerPhoto}
-                  alt={l.speakerName || 'Palestrante'}
-                  className="h-12 w-12 rounded-full object-cover border border-gray-200 shrink-0"
-                />
-              ) : (
-                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
-                  👤
-                </div>
-              )}
+        {days.map((d) => (
+          <div key={d.id} className="rounded-2xl bg-white border border-gray-200">
+            <div className="p-5 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-3 mb-1">
-                  <p className="font-bold text-navy-950 truncate">{l.title}</p>
-                  <LiveStatusBadge status={l.status} />
+                  <p className="font-bold text-navy-950 truncate">{d.title}</p>
+                  <LiveStatusBadge status={d.status} />
                 </div>
                 <p className="text-sm text-gray-500">
-                  {l.speakerName && <span className="font-medium">{l.speakerName} · </span>}
-                  {l.courseTitle} · {dateFormatter.format(new Date(l.scheduledAt))}
-                  {l.endsAt && <> às {endTimeFormatter.format(new Date(l.endsAt))}</>}
-                  {!l.embedUrl && (
+                  {d.courseTitle} · {dateFormatter.format(new Date(d.scheduledAt))}
+                  {d.endsAt && <> às {timeFormatter.format(new Date(d.endsAt))}</>}
+                  {!d.embedUrl && (
                     <span className="ml-2 text-amber-600 font-medium">· sem link ainda</span>
                   )}
                 </p>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs font-medium">
-              <Link
-                href={`/aulas/live/${l.id}`}
-                className="rounded-lg bg-navy-950 text-white px-3 py-1.5 hover:bg-navy-900"
-              >
-                ▶ Assistir
-              </Link>
-              {l.status !== 'LIVE' && (
-                <button
-                  onClick={() => handleStatus(l, 'LIVE')}
-                  className="rounded-lg bg-red-600 text-white px-3 py-1.5 hover:bg-red-700"
+              <div className="flex flex-wrap gap-2 text-xs font-medium">
+                <Link
+                  href={`/aulas/live/${d.id}`}
+                  className="rounded-lg bg-navy-950 text-white px-3 py-1.5 hover:bg-navy-900"
                 >
-                  ● Iniciar
-                </button>
-              )}
-              {l.status === 'LIVE' && (
+                  ▶ Assistir
+                </Link>
+                {d.status !== 'LIVE' && (
+                  <button
+                    onClick={() => handleStatus(d, 'LIVE')}
+                    className="rounded-lg bg-red-600 text-white px-3 py-1.5 hover:bg-red-700"
+                  >
+                    ● Iniciar
+                  </button>
+                )}
+                {d.status === 'LIVE' && (
+                  <button
+                    onClick={() => handleStatus(d, 'ENDED')}
+                    className="rounded-lg bg-gray-700 text-white px-3 py-1.5 hover:bg-gray-800"
+                  >
+                    Encerrar
+                  </button>
+                )}
+                {d.status === 'ENDED' && (
+                  <button
+                    onClick={() => handleStatus(d, 'SCHEDULED')}
+                    className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+                  >
+                    Reagendar
+                  </button>
+                )}
                 <button
-                  onClick={() => handleStatus(l, 'ENDED')}
-                  className="rounded-lg bg-gray-700 text-white px-3 py-1.5 hover:bg-gray-800"
-                >
-                  Encerrar
-                </button>
-              )}
-              {l.status === 'ENDED' && (
-                <button
-                  onClick={() => handleStatus(l, 'SCHEDULED')}
+                  onClick={() => openEditDay(d)}
                   className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
                 >
-                  Reagendar
+                  Editar
                 </button>
-              )}
-              <button
-                onClick={() => openEdit(l)}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
-              >
-                Editar
-              </button>
-              <button
-                onClick={() => handleDelete(l)}
-                className="rounded-lg border border-red-200 text-red-600 px-3 py-1.5 hover:bg-red-50"
-              >
-                Excluir
-              </button>
+                <button
+                  onClick={() => handleDeleteDay(d)}
+                  className="rounded-lg border border-red-200 text-red-600 px-3 py-1.5 hover:bg-red-50"
+                >
+                  Excluir
+                </button>
+                <button
+                  onClick={() => {
+                    setOpenProgram(openProgram === d.id ? null : d.id)
+                    setShowTalkForm(false)
+                  }}
+                  className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
+                >
+                  🗓 Programação ({d.talks.length})
+                </button>
+              </div>
             </div>
+
+            {openProgram === d.id && (
+              <div className="border-t border-gray-100 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-xs font-bold uppercase text-gray-400">
+                    Programação de {d.title}
+                  </p>
+                  <button
+                    onClick={() => openCreateTalk(d.id)}
+                    className="rounded-lg bg-gold-500 hover:bg-gold-600 px-3 py-1.5 text-xs font-bold text-navy-950"
+                  >
+                    + Adicionar palestra
+                  </button>
+                </div>
+
+                {showTalkForm && openProgram === d.id && (
+                  <form
+                    onSubmit={(e) => submitTalk(e, d.id)}
+                    className="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4 grid gap-3 md:grid-cols-2"
+                  >
+                    <div>
+                      <label className={labelCls}>Tema da palestra</label>
+                      <input
+                        value={tTitle}
+                        onChange={(e) => setTTitle(e.target.value)}
+                        required
+                        className={inputCls}
+                        placeholder="Ex.: Fiscalização de contratos na prática"
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Professor palestrante</label>
+                      <input
+                        value={tSpeaker}
+                        onChange={(e) => setTSpeaker(e.target.value)}
+                        className={inputCls}
+                        placeholder="Ex.: Jacoby Fernandes"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Início</label>
+                        <input
+                          type="datetime-local"
+                          value={tStart}
+                          onChange={(e) => setTStart(e.target.value)}
+                          required
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Término</label>
+                        <input
+                          type="datetime-local"
+                          value={tEnd}
+                          onChange={(e) => setTEnd(e.target.value)}
+                          min={tStart || undefined}
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Foto do palestrante</label>
+                      <div className="flex items-center gap-3">
+                        {tPhoto ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={tPhoto}
+                            alt="Foto do palestrante"
+                            className="h-12 w-12 rounded-full object-cover border border-gray-200"
+                          />
+                        ) : (
+                          <div className="h-12 w-12 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                            👤
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleTalkPhoto}
+                          className="text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-navy-950 file:px-3 file:py-1.5 file:text-white file:text-xs file:font-bold file:cursor-pointer"
+                        />
+                        {tPhoto && (
+                          <button
+                            type="button"
+                            onClick={() => setTPhoto('')}
+                            className="text-xs text-red-600 hover:underline"
+                          >
+                            remover
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className={labelCls}>Descrição (opcional)</label>
+                      <textarea
+                        value={tDesc}
+                        onChange={(e) => setTDesc(e.target.value)}
+                        rows={2}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div className="md:col-span-2 flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={isPending}
+                        className="rounded-lg bg-navy-950 hover:bg-navy-900 px-5 py-2 text-sm font-bold text-white transition disabled:opacity-60"
+                      >
+                        {isPending
+                          ? 'Salvando...'
+                          : editingTalk
+                            ? 'Salvar alterações'
+                            : 'Adicionar palestra'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowTalkForm(false)}
+                        className="rounded-lg border border-gray-300 px-5 py-2 text-sm"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {d.talks.length === 0 && !showTalkForm && (
+                  <p className="text-sm text-gray-500">
+                    Nenhuma palestra na programação deste dia ainda.
+                  </p>
+                )}
+
+                <div className="space-y-3">
+                  {d.talks.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        {t.speakerPhoto ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={t.speakerPhoto}
+                            alt={t.speakerName || 'Palestrante'}
+                            className="h-10 w-10 rounded-full object-cover border border-gray-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+                            👤
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-navy-950 truncate">
+                            {t.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {t.speakerName && <span>{t.speakerName} · </span>}
+                            {timeFormatter.format(new Date(t.startsAt))}
+                            {t.endsAt && <> – {timeFormatter.format(new Date(t.endsAt))}</>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 text-xs font-medium">
+                        <button
+                          onClick={() => openEditTalk(d.id, t)}
+                          className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTalk(t)}
+                          className="rounded-lg border border-red-200 text-red-600 px-2.5 py-1.5 hover:bg-red-50"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -35,7 +35,7 @@ export default async function AdminDashboardPage() {
     { label: 'Alunos cadastrados', value: totalMembers, href: '/admin/membros' },
     { label: 'Alunos ativos', value: activeMembers, href: '/admin/membros' },
     { label: 'Cursos ativos', value: totalCourses, href: '/admin/cursos' },
-    { label: 'Próximas palestras', value: upcomingLives.length, href: '/admin/lives' },
+    { label: 'Próximas transmissões', value: upcomingLives.length, href: '/admin/lives' },
   ]
 
   return (
@@ -72,14 +72,14 @@ export default async function AdminDashboardPage() {
 
       <div className="rounded-2xl bg-white border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-navy-950">Próximas palestras ao vivo</h2>
+          <h2 className="font-bold text-navy-950">Próximas transmissões</h2>
           <Link href="/admin/lives" className="text-sm text-navy-700 hover:underline">
             Gerenciar →
           </Link>
         </div>
         {upcomingLives.length === 0 ? (
           <p className="text-sm text-gray-500">
-            Nenhuma palestra agendada.{' '}
+            Nenhuma transmissão agendada.{' '}
             <Link href="/admin/lives" className="text-navy-700 hover:underline">
               Agendar agora
             </Link>

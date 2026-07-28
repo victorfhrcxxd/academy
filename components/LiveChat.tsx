@@ -27,6 +27,7 @@ export default function LiveChat({
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [settings, setSettings] = useState({ locked: false, slowMode: 0 })
   const listRef = useRef<HTMLDivElement>(null)
   const lastAtRef = useRef<string | null>(null)
   const stickToBottomRef = useRef(true)
@@ -42,6 +43,7 @@ export default function LiveChat({
       const res = await fetch(`/api/chat/${liveId}${qs}`, { cache: 'no-store' })
       if (!res.ok) return
       const data = await res.json()
+      if (data.settings) setSettings(data.settings)
       const incoming: ChatMessage[] = data.messages || []
       if (incoming.length === 0) return
       lastAtRef.current = incoming[incoming.length - 1].createdAt
@@ -100,10 +102,58 @@ export default function LiveChat({
     setMessages((prev) => prev.filter((m) => m.id !== id))
   }
 
+  const updateSettings = async (patch: { locked?: boolean; slowMode?: number }) => {
+    const res = await fetch(`/api/chat/${liveId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    })
+    if (res.ok) {
+      const d = await res.json()
+      if (d.settings) setSettings(d.settings)
+    }
+  }
+
+  const inputDisabled = settings.locked && !canModerate
+
   return (
     <div className="flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden h-[440px] lg:h-full">
       <div className="px-4 py-3 border-b border-gray-200 bg-navy-950 text-white">
-        <p className="font-bold text-sm">💬 Chat ao vivo</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="font-bold text-sm">💬 Chat ao vivo</p>
+          {canModerate && (
+            <div className="flex items-center gap-2">
+              <select
+                value={settings.slowMode}
+                onChange={(e) => updateSettings({ slowMode: Number(e.target.value) })}
+                className="rounded bg-navy-800 border border-white/20 text-xs px-1.5 py-1 text-white"
+                title="Modo lento: intervalo mínimo entre mensagens por aluno"
+              >
+                <option value={0}>⏱ Sem delay</option>
+                <option value={5}>⏱ 5s</option>
+                <option value={10}>⏱ 10s</option>
+                <option value={30}>⏱ 30s</option>
+                <option value={60}>⏱ 1min</option>
+              </select>
+              <button
+                onClick={() => updateSettings({ locked: !settings.locked })}
+                className={`rounded px-2 py-1 text-xs font-bold ${
+                  settings.locked
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-navy-800 border border-white/20 hover:bg-navy-700'
+                }`}
+                title={settings.locked ? 'Desbloquear chat' : 'Bloquear chat'}
+              >
+                {settings.locked ? '🔒 Bloqueado' : '🔓 Aberto'}
+              </button>
+            </div>
+          )}
+        </div>
+        {settings.slowMode > 0 && (
+          <p className="text-[11px] text-white/60 mt-1">
+            Modo lento ativo: 1 mensagem a cada {settings.slowMode}s
+          </p>
+        )}
       </div>
 
       <div
@@ -152,12 +202,15 @@ export default function LiveChat({
             value={text}
             onChange={(e) => setText(e.target.value)}
             maxLength={500}
-            placeholder="Escreva sua mensagem..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-navy-900 focus:ring-2 focus:ring-navy-900/15"
+            disabled={inputDisabled}
+            placeholder={
+              inputDisabled ? '🔒 Chat bloqueado pela equipe' : 'Escreva sua mensagem...'
+            }
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-navy-900 focus:ring-2 focus:ring-navy-900/15 disabled:bg-gray-100 disabled:text-gray-400"
           />
           <button
             type="submit"
-            disabled={sending || !text.trim()}
+            disabled={sending || !text.trim() || inputDisabled}
             className="rounded-lg bg-gold-500 hover:bg-gold-600 px-4 py-2 text-sm font-bold text-navy-950 transition disabled:opacity-50"
           >
             Enviar

@@ -57,6 +57,8 @@ model Live {
   scheduledAt  DateTime
   embedUrl     String?
   status       String   @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
+  chatLocked   Boolean  @default(false) // chat bloqueado pela equipe
+  chatSlowMode Int      @default(0) // modo lento: segundos entre mensagens por aluno (0 = off)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -10,7 +10,7 @@ async function authorize(liveId: string) {
 
   const live = await prisma.live.findUnique({
     where: { id: liveId },
-    select: { courseId: true },
+    select: { courseId: true, chatLocked: true, chatSlowMode: true },
   })
   if (!live) return null
 
@@ -23,7 +23,7 @@ async function authorize(liveId: string) {
     if (!enrollment) return null
   }
 
-  return session
+  return { session, live }
 }
 
 export async function GET(
@@ -31,8 +31,8 @@ export async function GET(
   { params }: { params: Promise<{ liveId: string }> }
 ) {
   const { liveId } = await params
-  const session = await authorize(liveId)
-  if (!session) {
+  const auth = await authorize(liveId)
+  if (!auth) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
   }
 
@@ -49,13 +49,14 @@ export async function GET(
   })
 
   return NextResponse.json({
+    settings: { locked: auth.live.chatLocked, slowMode: auth.live.chatSlowMode },
     messages: messages.map((m) => ({
       id: m.id,
       text: m.text,
       createdAt: m.createdAt.toISOString(),
       author: m.user.name,
       isAdmin: m.user.role === 'ADMIN',
-      mine: m.userId === session.user.id,
+      mine: m.userId === auth.session.user.id,
     })),
   })
 }
@@ -65,9 +66,15 @@ export async function POST(
   { params }: { params: Promise<{ liveId: string }> }
 ) {
   const { liveId } = await params
-  const session = await authorize(liveId)
-  if (!session) {
+  const auth = await authorize(liveId)
+  if (!auth) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+  }
+  const { session, live } = auth
+  const isAdmin = session.user.role === 'ADMIN'
+
+  if (live.chatLocked && !isAdmin) {
+    return NextResponse.json({ error: 'O chat está bloqueado pela equipe' }, { status: 403 })
   }
 
   const body = await req.json().catch(() => null)
@@ -80,11 +87,58 @@ export async function POST(
     return NextResponse.json({ error: 'Mensagem muito longa (máx. 500 caracteres)' }, { status: 400 })
   }
 
+  // Modo lento: 1 mensagem a cada N segundos por aluno (admins isentos)
+  if (live.chatSlowMode > 0 && !isAdmin) {
+    const lastMessage = await prisma.chatMessage.findFirst({
+      where: { liveId, userId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    })
+    if (lastMessage) {
+      const elapsed = (Date.now() - lastMessage.createdAt.getTime()) / 1000
+      const remaining = Math.ceil(live.chatSlowMode - elapsed)
+      if (remaining > 0) {
+        return NextResponse.json(
+          { error: `Modo lento ativo — aguarde ${remaining}s para enviar de novo` },
+          { status: 429 }
+        )
+      }
+    }
+  }
+
   const message = await prisma.chatMessage.create({
     data: { liveId, userId: session.user.id, text },
   })
 
   return NextResponse.json({ ok: true, id: message.id, createdAt: message.createdAt.toISOString() })
+}
+
+// Moderação: admin ajusta bloqueio e modo lento do chat
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ liveId: string }> }
+) {
+  const { liveId } = await params
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+  }
+
+  const body = await req.json().catch(() => null)
+  const data: { chatLocked?: boolean; chatSlowMode?: number } = {}
+  if (typeof body?.locked === 'boolean') data.chatLocked = body.locked
+  if (typeof body?.slowMode === 'number' && body.slowMode >= 0 && body.slowMode <= 600) {
+    data.chatSlowMode = Math.round(body.slowMode)
+  }
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: 'Nada para atualizar' }, { status: 400 })
+  }
+
+  const live = await prisma.live.update({ where: { id: liveId }, data })
+  return NextResponse.json({
+    ok: true,
+    settings: { locked: live.chatLocked, slowMode: live.chatSlowMode },
+  })
 }
 
 // Moderação: admin pode apagar mensagem (?id=...)

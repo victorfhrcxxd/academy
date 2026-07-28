@@ -38,10 +38,15 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
     if (!enrollment) redirect('/aulas')
   }
 
+  const isAdmin = session.user.role === 'ADMIN'
+
   return (
     <div className="mx-auto max-w-[1800px]">
-      <Link href="/aulas" className="text-sm text-navy-700 hover:underline">
-        ← Voltar para as palestras
+      <Link
+        href={isAdmin ? '/admin/lives' : '/aulas'}
+        className="text-sm text-navy-700 hover:underline"
+      >
+        ← {isAdmin ? 'Voltar para o painel' : 'Voltar para as palestras'}
       </Link>
 
       <div className="mt-4 mb-6 flex items-center gap-4">
@@ -95,7 +100,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
         )}
 
         <div className="lg:h-[calc(100vh-230px)] lg:min-h-[540px]">
-          <LiveChat liveId={live.id} canModerate={session.user.role === 'ADMIN'} />
+          <LiveChat liveId={live.id} canModerate={isAdmin} />
         </div>
       </div>
 

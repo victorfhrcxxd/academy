@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import {
   createLive,
   updateLive,
@@ -363,6 +364,12 @@ export default function LivesManager({
               </div>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-medium">
+              <Link
+                href={`/aulas/live/${l.id}`}
+                className="rounded-lg bg-navy-950 text-white px-3 py-1.5 hover:bg-navy-900"
+              >
+                ▶ Assistir
+              </Link>
               {l.status !== 'LIVE' && (
                 <button
                   onClick={() => handleStatus(l, 'LIVE')}

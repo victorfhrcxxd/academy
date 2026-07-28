@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import LiveSidePanel from '@/components/LiveSidePanel'
+import LiveRoom from '@/components/LiveRoom'
 import ProtectedPlayer from '@/components/ProtectedPlayer'
 import AttendanceTracker from '@/components/AttendanceTracker'
 
@@ -81,7 +82,9 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] items-start">
+      <LiveRoom
+        side={<LiveSidePanel liveId={live.id} canModerate={isAdmin} />}
+        main={
         <div>
           {playerUrl ? (
             <ProtectedPlayer
@@ -175,11 +178,8 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
             </div>
           )}
         </div>
-
-        <div className="lg:h-[calc(100vh-230px)] lg:min-h-[540px] lg:sticky lg:top-6">
-          <LiveSidePanel liveId={live.id} canModerate={isAdmin} />
-        </div>
-      </div>
+        }
+      />
     </div>
   )
 }

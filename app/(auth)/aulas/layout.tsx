@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import SignOutButton from '@/components/SignOutButton'
+import DevToolsBlocker from '@/components/DevToolsBlocker'
 import type { ReactNode } from 'react'
 
 const menuItems = [
@@ -14,6 +15,8 @@ export default async function MemberLayout({ children }: { children: ReactNode }
 
   return (
     <div className="flex min-h-screen bg-[#f4f7f9]">
+      {/* Inibidor de DevTools só para alunos — admin fica isento pra depurar */}
+      {session?.user?.role !== 'ADMIN' && <DevToolsBlocker />}
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col bg-navy-950 text-white">
         <div className="flex h-16 items-center px-5 border-b border-white/10">

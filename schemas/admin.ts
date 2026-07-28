@@ -27,11 +27,15 @@ export const liveSchema = z.object({
   // foto: data URL (upload redimensionado no navegador) ou link https
   speakerPhoto: z.string().max(900_000).optional().or(z.literal('')),
   scheduledAt: z.coerce.date({ message: 'Data e hora inválidas' }),
+  endsAt: z.coerce.date({ message: 'Horário de término inválido' }).optional(),
   embedUrl: z
     .string()
     .url('Link inválido — use a URL completa (https://...)')
     .optional()
     .or(z.literal('')),
+}).refine((d) => !d.endsAt || d.endsAt > d.scheduledAt, {
+  message: 'O término deve ser depois do início',
+  path: ['endsAt'],
 })
 
 export type LiveInput = z.infer<typeof liveSchema>

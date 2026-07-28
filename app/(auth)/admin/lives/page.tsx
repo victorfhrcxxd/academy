@@ -26,6 +26,7 @@ export default async function AdminLivesPage() {
     speakerName: l.speakerName,
     speakerPhoto: l.speakerPhoto,
     scheduledAt: l.scheduledAt.toISOString(),
+    endsAt: l.endsAt ? l.endsAt.toISOString() : null,
     embedUrl: l.embedUrl,
     status: l.status,
   }))

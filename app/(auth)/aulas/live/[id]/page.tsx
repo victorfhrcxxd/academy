@@ -16,6 +16,12 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
 })
 
+const endTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Sao_Paulo',
+})
+
 export default async function LivePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const session = await getServerSession(authOptions)
@@ -68,6 +74,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
               <span className="font-medium text-navy-900">{live.speakerName} · </span>
             )}
             {live.course.title} · {dateFormatter.format(live.scheduledAt)}
+            {live.endsAt && <> às {endTimeFormatter.format(live.endsAt)}</>}
           </p>
         </div>
       </div>

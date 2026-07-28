@@ -55,6 +55,7 @@ model Live {
   speakerName  String? // professor palestrante
   speakerPhoto String? // foto (data URL ou link https)
   scheduledAt  DateTime
+  endsAt       DateTime? // horário previsto de término
   embedUrl     String?
   status       String   @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
   chatLocked   Boolean  @default(false) // chat bloqueado pela equipe

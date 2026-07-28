@@ -16,6 +16,12 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
 })
 
+const endTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'America/Sao_Paulo',
+})
+
 export default async function MemberDashboardPage() {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/login')
@@ -95,6 +101,7 @@ export default async function MemberDashboardPage() {
                       <span className="font-medium">{live.speakerName} · </span>
                     )}
                     {dateFormatter.format(live.scheduledAt)}
+                    {live.endsAt && <> às {endTimeFormatter.format(live.endsAt)}</>}
                   </p>
                 </div>
               </div>

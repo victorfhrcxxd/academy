@@ -24,9 +24,15 @@ interface Live {
   speakerName: string | null
   speakerPhoto: string | null
   scheduledAt: string
+  endsAt: string | null
   embedUrl: string | null
   status: string
 }
+
+const endTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
+  hour: '2-digit',
+  minute: '2-digit',
+})
 
 // Redimensiona a foto no navegador (máx. 320px) e devolve como data URL
 function resizePhoto(file: File): Promise<string> {
@@ -77,6 +83,7 @@ export default function LivesManager({
   const [speakerName, setSpeakerName] = useState('')
   const [speakerPhoto, setSpeakerPhoto] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
+  const [endsAt, setEndsAt] = useState('')
   const [embedUrl, setEmbedUrl] = useState('')
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -94,6 +101,7 @@ export default function LivesManager({
     setSpeakerName('')
     setSpeakerPhoto('')
     setScheduledAt('')
+    setEndsAt('')
     setEmbedUrl('')
     setShowForm(true)
   }
@@ -106,6 +114,7 @@ export default function LivesManager({
     setSpeakerName(l.speakerName || '')
     setSpeakerPhoto(l.speakerPhoto || '')
     setScheduledAt(toLocalInputValue(l.scheduledAt))
+    setEndsAt(l.endsAt ? toLocalInputValue(l.endsAt) : '')
     setEmbedUrl(l.embedUrl || '')
     setShowForm(true)
   }
@@ -130,6 +139,7 @@ export default function LivesManager({
         speakerName: speakerName || undefined,
         speakerPhoto: speakerPhoto || '',
         scheduledAt: new Date(scheduledAt),
+        endsAt: endsAt ? new Date(endsAt) : undefined,
         embedUrl: embedUrl || '',
       }
       const res = editing ? await updateLive(editing.id, payload) : await createLive(payload)
@@ -269,17 +279,31 @@ export default function LivesManager({
               )}
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Data e hora
-            </label>
-            <input
-              type="datetime-local"
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-navy-950 mb-1.5">
+                Início
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-navy-950 mb-1.5">
+                Término
+              </label>
+              <input
+                type="datetime-local"
+                value={endsAt}
+                onChange={(e) => setEndsAt(e.target.value)}
+                min={scheduledAt || undefined}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-navy-950 mb-1.5">
@@ -357,6 +381,7 @@ export default function LivesManager({
                 <p className="text-sm text-gray-500">
                   {l.speakerName && <span className="font-medium">{l.speakerName} · </span>}
                   {l.courseTitle} · {dateFormatter.format(new Date(l.scheduledAt))}
+                  {l.endsAt && <> às {endTimeFormatter.format(new Date(l.endsAt))}</>}
                   {!l.embedUrl && (
                     <span className="ml-2 text-amber-600 font-medium">· sem link ainda</span>
                   )}

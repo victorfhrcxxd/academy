@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
+import SurveyCard from '@/components/SurveyCard'
 
 const dayFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'long',
@@ -40,6 +41,17 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
     })
     if (!enrollment) redirect('/aulas')
   }
+
+  // pesquisa de satisfação: aparece pro aluno quando algum dia já encerrou
+  const hasEndedDay = course.lives.some((l) => l.status === 'ENDED')
+  const mySurvey =
+    session.user.role !== 'ADMIN' && hasEndedDay
+      ? await prisma.surveyResponse.findUnique({
+          where: {
+            courseId_userId: { courseId: course.id, userId: session.user.id },
+          },
+        })
+      : null
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -139,6 +151,12 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           </div>
         ))}
       </div>
+
+      {session.user.role !== 'ADMIN' && hasEndedDay && (
+        <div className="mt-8">
+          <SurveyCard courseId={course.id} existingRating={mySurvey?.rating ?? null} />
+        </div>
+      )}
     </div>
   )
 }

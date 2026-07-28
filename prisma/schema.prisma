@@ -123,6 +123,30 @@ model QuestionVote {
   @@unique([questionId, userId])
 }
 
+// Controle de lembretes enviados (evita email duplicado)
+model ReminderLog {
+  id     String   @id @default(cuid())
+  liveId String
+  userId String
+  kind   String // H24 | H1
+  sentAt DateTime @default(now())
+
+  @@unique([liveId, userId, kind])
+}
+
+// Avaliação do evento pelo aluno (1 a 5 estrelas + comentário)
+model SurveyResponse {
+  id        String   @id @default(cuid())
+  courseId  String
+  userId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, userId])
+  @@index([courseId])
+}
+
 // Material de apoio de um dia (PDF/slide hospedado no Vercel Blob)
 model Material {
   id        String   @id @default(cuid())

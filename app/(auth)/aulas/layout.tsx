@@ -3,11 +3,14 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import SignOutButton from '@/components/SignOutButton'
 import DevToolsBlocker from '@/components/DevToolsBlocker'
+import NextLiveBanner from '@/components/NextLiveBanner'
+import SupportButton from '@/components/SupportButton'
 import type { ReactNode } from 'react'
 
 const menuItems = [
   { href: '/aulas', label: 'Cursos adquiridos', icon: '📚' },
   { href: '/aulas/certificados', label: 'Certificados', icon: '🎓' },
+  { href: '/aulas/perfil', label: 'Minha conta', icon: '👤' },
 ]
 
 export default async function MemberLayout({ children }: { children: ReactNode }) {
@@ -65,8 +68,14 @@ export default async function MemberLayout({ children }: { children: ReactNode }
           </div>
         </header>
 
+        {session?.user?.role !== 'ADMIN' && <NextLiveBanner />}
+
         <main className="flex-1 overflow-auto px-6 py-8">{children}</main>
       </div>
+
+      {process.env.WHATSAPP_SUPPORT && (
+        <SupportButton phone={process.env.WHATSAPP_SUPPORT} />
+      )}
     </div>
   )
 }

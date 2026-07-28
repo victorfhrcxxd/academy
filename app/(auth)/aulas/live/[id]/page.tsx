@@ -39,7 +39,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-[1800px]">
       <Link href="/aulas" className="text-sm text-navy-700 hover:underline">
         ← Voltar para as palestras
       </Link>
@@ -67,7 +67,7 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px] items-stretch">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] items-start">
         {live.embedUrl ? (
           <div className="rounded-2xl overflow-hidden border border-gray-200 bg-black shadow-sm self-start">
             <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
@@ -94,7 +94,9 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
           </div>
         )}
 
-        <LiveChat liveId={live.id} canModerate={session.user.role === 'ADMIN'} />
+        <div className="lg:h-[calc(100vh-230px)] lg:min-h-[540px]">
+          <LiveChat liveId={live.id} canModerate={session.user.role === 'ADMIN'} />
+        </div>
       </div>
 
       {live.description && (

@@ -34,7 +34,7 @@ export default async function MemberDashboardPage() {
   })
 
   return (
-    <div>
+    <div className="mx-auto max-w-6xl">
       <h1 className="text-2xl font-bold text-navy-950 mb-1">
         Olá, {session.user.name?.split(' ')[0]} 👋
       </h1>

@@ -101,7 +101,7 @@ export default function LiveChat({
   }
 
   return (
-    <div className="flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden h-[420px] lg:h-full lg:min-h-[480px]">
+    <div className="flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden h-[440px] lg:h-full">
       <div className="px-4 py-3 border-b border-gray-200 bg-navy-950 text-white">
         <p className="font-bold text-sm">💬 Chat ao vivo</p>
       </div>

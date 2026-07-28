@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description:
     "Área de membros da Valeriote Cursos: acompanhe ao vivo as transmissões do seu curso presencial.",
   authors: [{ name: "Valeriote Cursos e Consultoria" }],
+  icons: { icon: "/brand/valeriote-favicon.webp" },
 };
 
 export default function RootLayout({

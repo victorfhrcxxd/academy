@@ -11,11 +11,13 @@ export default async function MemberLayout({ children }: { children: ReactNode }
     <div className="min-h-screen bg-[#f4f7f9]">
       <nav className="bg-navy-950 text-white">
         <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-          <Link href="/aulas" className="flex items-center gap-3">
-            <span className="h-9 w-9 rounded-lg bg-navy-800 text-gold-500 flex items-center justify-center font-black">
-              V
-            </span>
-            <span className="font-bold">Valeriote Cursos</span>
+          <Link href="/aulas" className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/valeriote-logo.png"
+              alt="Valeriote Cursos"
+              className="h-8 w-auto"
+            />
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-white/70 hidden sm:inline">

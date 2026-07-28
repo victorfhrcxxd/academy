@@ -10,12 +10,11 @@ export const metadata = {
 }
 
 function BrandMark({ size = 'md' }: { size?: 'md' | 'lg' }) {
-  const box = size === 'lg' ? 'h-16 w-16 rounded-2xl text-3xl' : 'h-12 w-12 rounded-xl text-2xl'
+  const box = size === 'lg' ? 'h-16 w-16 rounded-2xl p-3' : 'h-12 w-12 rounded-xl p-2'
   return (
-    <div
-      className={`${box} bg-navy-900 text-gold-500 flex items-center justify-center font-black shadow-lg shadow-navy-900/30`}
-    >
-      V
+    <div className={`${box} bg-navy-900 flex items-center justify-center shadow-lg shadow-navy-900/30`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/brand/valeriote-favicon.webp" alt="Valeriote" className="h-full w-full object-contain" />
     </div>
   )
 }
@@ -83,14 +82,12 @@ export default async function LoginPage() {
         <div className="absolute -bottom-32 left-10 h-96 w-96 rounded-full border border-white/5" />
 
         <div className="relative max-w-xl">
-          <div className="flex items-center gap-3 mb-8">
-            <span className="text-4xl font-black tracking-tight">
-              <span className="text-gold-500">V</span>ALERIOTE
-            </span>
-          </div>
-          <p className="text-xs tracking-[0.35em] text-white/60 -mt-7 mb-8 ml-1">
-            CURSOS E CONSULTORIA
-          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/valeriote-logo.png"
+            alt="Valeriote Cursos e Consultoria"
+            className="h-16 w-auto mb-10"
+          />
 
           <p className="text-xl text-white/90 mb-10 leading-relaxed">
             Plataforma de transmissão ao vivo — acompanhe as aulas do seu curso

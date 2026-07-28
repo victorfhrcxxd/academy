@@ -22,11 +22,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="flex min-h-screen bg-[#f4f7f9]">
       {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col bg-navy-950 text-white">
-        <div className="flex h-16 items-center gap-3 px-6 border-b border-white/10">
-          <span className="h-9 w-9 rounded-lg bg-navy-800 text-gold-500 flex items-center justify-center font-black">
-            V
-          </span>
-          <span className="font-bold">Valeriote Admin</span>
+        <div className="flex h-16 items-center px-5 border-b border-white/10">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/valeriote-logo.png"
+            alt="Valeriote"
+            className="h-7 w-auto"
+          />
         </div>
 
         <nav className="space-y-1 px-4 py-6 flex-1">

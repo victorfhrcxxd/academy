@@ -21,8 +21,11 @@ export type CourseInput = z.infer<typeof courseSchema>
 
 export const liveSchema = z.object({
   courseId: z.string().min(1, 'Selecione o curso'),
-  title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(150),
+  title: z.string().min(3, 'Tema deve ter no mínimo 3 caracteres').max(150),
   description: z.string().max(2000).optional(),
+  speakerName: z.string().max(120).optional(),
+  // foto: data URL (upload redimensionado no navegador) ou link https
+  speakerPhoto: z.string().max(900_000).optional().or(z.literal('')),
   scheduledAt: z.coerce.date({ message: 'Data e hora inválidas' }),
   embedUrl: z
     .string()

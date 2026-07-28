@@ -20,9 +20,29 @@ interface Live {
   courseTitle: string
   title: string
   description: string | null
+  speakerName: string | null
+  speakerPhoto: string | null
   scheduledAt: string
   embedUrl: string | null
   status: string
+}
+
+// Redimensiona a foto no navegador (máx. 320px) e devolve como data URL
+function resizePhoto(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const max = 320
+      const scale = Math.min(1, max / Math.max(img.width, img.height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.round(img.width * scale)
+      canvas.height = Math.round(img.height * scale)
+      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height)
+      resolve(canvas.toDataURL('image/jpeg', 0.85))
+    }
+    img.onerror = () => reject(new Error('Imagem inválida'))
+    img.src = URL.createObjectURL(file)
+  })
 }
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -53,6 +73,8 @@ export default function LivesManager({
   const [courseId, setCourseId] = useState('')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [speakerName, setSpeakerName] = useState('')
+  const [speakerPhoto, setSpeakerPhoto] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [embedUrl, setEmbedUrl] = useState('')
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
@@ -68,6 +90,8 @@ export default function LivesManager({
     setCourseId(courses[0]?.id || '')
     setTitle('')
     setDescription('')
+    setSpeakerName('')
+    setSpeakerPhoto('')
     setScheduledAt('')
     setEmbedUrl('')
     setShowForm(true)
@@ -78,9 +102,21 @@ export default function LivesManager({
     setCourseId(l.courseId)
     setTitle(l.title)
     setDescription(l.description || '')
+    setSpeakerName(l.speakerName || '')
+    setSpeakerPhoto(l.speakerPhoto || '')
     setScheduledAt(toLocalInputValue(l.scheduledAt))
     setEmbedUrl(l.embedUrl || '')
     setShowForm(true)
+  }
+
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      setSpeakerPhoto(await resizePhoto(file))
+    } catch {
+      notify(false, 'Não foi possível ler a imagem')
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -90,6 +126,8 @@ export default function LivesManager({
         courseId,
         title,
         description: description || undefined,
+        speakerName: speakerName || undefined,
+        speakerPhoto: speakerPhoto || '',
         scheduledAt: new Date(scheduledAt),
         embedUrl: embedUrl || '',
       }
@@ -110,10 +148,10 @@ export default function LivesManager({
     })
 
   const handleDelete = (l: Live) => {
-    if (!confirm(`Excluir a aula "${l.title}"?`)) return
+    if (!confirm(`Excluir a palestra "${l.title}"?`)) return
     startTransition(async () => {
       const res = await deleteLive(l.id)
-      notify(res.success, res.success ? 'Aula excluída' : res.error || 'Erro')
+      notify(res.success, res.success ? 'Palestra excluída' : res.error || 'Erro')
     })
   }
 
@@ -121,9 +159,9 @@ export default function LivesManager({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-navy-950">Aulas ao vivo</h1>
+          <h1 className="text-2xl font-bold text-navy-950">Palestras ao vivo</h1>
           <p className="text-sm text-gray-500">
-            Agende as transmissões e cole o link da plataforma quando for transmitir.
+            Agende as palestras do evento e cole o link da transmissão quando for transmitir.
           </p>
         </div>
         <button
@@ -131,13 +169,13 @@ export default function LivesManager({
           disabled={courses.length === 0}
           className="rounded-lg bg-gold-500 hover:bg-gold-600 px-5 py-2.5 text-sm font-bold text-navy-950 transition disabled:opacity-50"
         >
-          + Agendar aula
+          + Agendar palestra
         </button>
       </div>
 
       {courses.length === 0 && (
         <p className="mb-4 text-sm text-gray-500">
-          Crie um curso primeiro para poder agendar aulas.
+          Crie um curso primeiro para poder agendar palestras.
         </p>
       )}
 
@@ -175,15 +213,60 @@ export default function LivesManager({
           </div>
           <div>
             <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Título da aula
+              Tema da palestra
             </label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              placeholder="Ex.: Aula 01 — Introdução"
+              placeholder="Ex.: Fiscalização de contratos na prática"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-navy-950 mb-1.5">
+              Professor palestrante
+            </label>
+            <input
+              value={speakerName}
+              onChange={(e) => setSpeakerName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              placeholder="Ex.: Jacoby Fernandes"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-navy-950 mb-1.5">
+              Foto do palestrante
+            </label>
+            <div className="flex items-center gap-3">
+              {speakerPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={speakerPhoto}
+                  alt="Foto do palestrante"
+                  className="h-12 w-12 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                  👤
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhoto}
+                className="text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-navy-950 file:px-3 file:py-1.5 file:text-white file:text-xs file:font-bold file:cursor-pointer"
+              />
+              {speakerPhoto && (
+                <button
+                  type="button"
+                  onClick={() => setSpeakerPhoto('')}
+                  className="text-xs text-red-600 hover:underline"
+                >
+                  remover
+                </button>
+              )}
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-navy-950 mb-1.5">
@@ -205,11 +288,12 @@ export default function LivesManager({
               value={embedUrl}
               onChange={(e) => setEmbedUrl(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              placeholder="https://www.youtube.com/embed/... (pode colar depois)"
+              placeholder="https://www.youtube.com/watch?v=... (pode colar depois)"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Cole aqui o link de incorporação (embed) da plataforma que você usar —
-              YouTube, Vimeo, etc. Dá pra deixar vazio e preencher na hora.
+              Pode colar o link normal do YouTube ou Vimeo (do jeito que copiar do
+              navegador) — a plataforma converte sozinha pro formato do player.
+              Dá pra deixar vazio e preencher na hora.
             </p>
           </div>
           <div className="md:col-span-2">
@@ -229,7 +313,7 @@ export default function LivesManager({
               disabled={isPending}
               className="rounded-lg bg-navy-950 hover:bg-navy-900 px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-60"
             >
-              {isPending ? 'Salvando...' : editing ? 'Salvar alterações' : 'Agendar aula'}
+              {isPending ? 'Salvando...' : editing ? 'Salvar alterações' : 'Agendar palestra'}
             </button>
             <button
               type="button"
@@ -244,24 +328,39 @@ export default function LivesManager({
 
       <div className="space-y-3">
         {lives.length === 0 && (
-          <p className="text-gray-500 text-sm">Nenhuma aula agendada ainda.</p>
+          <p className="text-gray-500 text-sm">Nenhuma palestra agendada ainda.</p>
         )}
         {lives.map((l) => (
           <div
             key={l.id}
             className="rounded-2xl bg-white border border-gray-200 p-5 flex flex-wrap items-center justify-between gap-4"
           >
-            <div className="min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                <p className="font-bold text-navy-950 truncate">{l.title}</p>
-                <LiveStatusBadge status={l.status} />
+            <div className="flex items-center gap-3 min-w-0">
+              {l.speakerPhoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={l.speakerPhoto}
+                  alt={l.speakerName || 'Palestrante'}
+                  className="h-12 w-12 rounded-full object-cover border border-gray-200 shrink-0"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+                  👤
+                </div>
+              )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-3 mb-1">
+                  <p className="font-bold text-navy-950 truncate">{l.title}</p>
+                  <LiveStatusBadge status={l.status} />
+                </div>
+                <p className="text-sm text-gray-500">
+                  {l.speakerName && <span className="font-medium">{l.speakerName} · </span>}
+                  {l.courseTitle} · {dateFormatter.format(new Date(l.scheduledAt))}
+                  {!l.embedUrl && (
+                    <span className="ml-2 text-amber-600 font-medium">· sem link ainda</span>
+                  )}
+                </p>
               </div>
-              <p className="text-sm text-gray-500">
-                {l.courseTitle} · {dateFormatter.format(new Date(l.scheduledAt))}
-                {!l.embedUrl && (
-                  <span className="ml-2 text-amber-600 font-medium">· sem link ainda</span>
-                )}
-              </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-medium">
               {l.status !== 'LIVE' && (

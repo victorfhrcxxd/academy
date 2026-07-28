@@ -114,7 +114,7 @@ export default function MembersManager({
         <div>
           <h1 className="text-2xl font-bold text-navy-950">Alunos</h1>
           <p className="text-sm text-gray-500">
-            Cadastre quem já fez a inscrição no curso presencial e libere o acesso às lives.
+            Cadastre quem já fez a inscrição e libere o acesso às palestras ao vivo.
           </p>
         </div>
         <button

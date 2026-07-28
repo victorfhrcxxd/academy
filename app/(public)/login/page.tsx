@@ -22,18 +22,18 @@ function BrandMark({ size = 'md' }: { size?: 'md' | 'lg' }) {
 const highlights = [
   {
     icon: '🎥',
-    title: 'Aulas ao vivo',
-    text: 'Assista às transmissões do seu curso presencial em tempo real, de onde estiver.',
+    title: 'Palestras ao vivo',
+    text: 'Assista à transmissão do evento presencial em tempo real, de onde estiver.',
   },
   {
     icon: '🎓',
     title: 'Área de membros',
-    text: 'Acesso exclusivo para alunos com inscrição confirmada no curso.',
+    text: 'Acesso exclusivo para alunos com inscrição confirmada.',
   },
   {
-    icon: '🗓️',
-    title: 'Agenda organizada',
-    text: 'Veja as próximas aulas do seu curso e entre na transmissão em um clique.',
+    icon: '💬',
+    title: 'Chat ao vivo',
+    text: 'Comente e interaja com os outros participantes durante as palestras.',
   },
 ]
 
@@ -57,7 +57,7 @@ export default async function LoginPage() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
             <h2 className="text-lg font-bold text-navy-950">Faça seu login</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Insira suas credenciais para acessar as aulas.
+              Insira suas credenciais para acessar as palestras.
             </p>
             <Suspense fallback={<div className="text-center text-sm text-gray-500">Carregando...</div>}>
               <LoginForm />
@@ -90,7 +90,7 @@ export default async function LoginPage() {
           />
 
           <p className="text-xl text-white/90 mb-10 leading-relaxed">
-            Plataforma de transmissão ao vivo — acompanhe as aulas do seu curso
+            Plataforma de transmissão ao vivo — acompanhe as palestras do evento
             presencial em um único lugar.
           </p>
 

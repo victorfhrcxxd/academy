@@ -23,6 +23,8 @@ export default async function AdminLivesPage() {
     courseTitle: l.course.title,
     title: l.title,
     description: l.description,
+    speakerName: l.speakerName,
+    speakerPhoto: l.speakerPhoto,
     scheduledAt: l.scheduledAt.toISOString(),
     embedUrl: l.embedUrl,
     status: l.status,

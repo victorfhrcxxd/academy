@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 
-export const metadata = { title: 'Minhas Aulas — Valeriote Cursos' }
+export const metadata = { title: 'Palestras — Valeriote Cursos' }
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'short',
@@ -39,7 +39,7 @@ export default async function MemberDashboardPage() {
         Olá, {session.user.name?.split(' ')[0]} 👋
       </h1>
       <p className="text-gray-500 mb-8">
-        Aqui estão as transmissões das aulas do seu curso presencial.
+        Acompanhe ao vivo as palestras do evento — transmissão direta do presencial.
       </p>
 
       {enrollments.length === 0 && (
@@ -75,11 +75,28 @@ export default async function MemberDashboardPage() {
                   : 'border-gray-200 bg-white hover:border-navy-600/40 hover:shadow-sm'
               }`}
             >
-              <div className="min-w-0">
-                <p className="font-semibold text-navy-950 truncate">{live.title}</p>
-                <p className="text-sm text-gray-500">
-                  {dateFormatter.format(live.scheduledAt)}
-                </p>
+              <div className="flex items-center gap-3 min-w-0">
+                {live.speakerPhoto ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={live.speakerPhoto}
+                    alt={live.speakerName || 'Palestrante'}
+                    className="h-11 w-11 rounded-full object-cover border border-gray-200 shrink-0"
+                  />
+                ) : (
+                  <div className="h-11 w-11 rounded-full bg-navy-900/10 flex items-center justify-center text-navy-900 shrink-0">
+                    🎤
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-semibold text-navy-950 truncate">{live.title}</p>
+                  <p className="text-sm text-gray-500 truncate">
+                    {live.speakerName && (
+                      <span className="font-medium">{live.speakerName} · </span>
+                    )}
+                    {dateFormatter.format(live.scheduledAt)}
+                  </p>
+                </div>
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <LiveStatusBadge status={live.status} />
@@ -101,7 +118,7 @@ export default async function MemberDashboardPage() {
 
               {course.lives.length === 0 && (
                 <div className="bg-white border border-dashed border-gray-300 rounded-xl p-6 text-center text-sm text-gray-500">
-                  Nenhuma aula agendada ainda — fique de olho, a agenda aparece aqui.
+                  Nenhuma palestra agendada ainda — fique de olho, a programação aparece aqui.
                 </div>
               )}
 
@@ -113,7 +130,7 @@ export default async function MemberDashboardPage() {
               {encerradas.length > 0 && (
                 <details className="mt-4">
                   <summary className="text-sm text-gray-500 cursor-pointer select-none">
-                    Aulas anteriores ({encerradas.length})
+                    Palestras anteriores ({encerradas.length})
                   </summary>
                   <div className="space-y-3 mt-3">{encerradas.map(renderLive)}</div>
                 </details>

@@ -3,7 +3,9 @@ import { getServerSession } from 'next-auth'
 import { notFound, redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { toEmbedUrl } from '@/lib/embed'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
+import LiveChat from '@/components/LiveChat'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'long',
@@ -39,47 +41,65 @@ export default async function LivePage({ params }: { params: Promise<{ id: strin
   return (
     <div>
       <Link href="/aulas" className="text-sm text-navy-700 hover:underline">
-        ← Voltar para minhas aulas
+        ← Voltar para as palestras
       </Link>
 
-      <div className="mt-4 mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-navy-950">{live.title}</h1>
-        <LiveStatusBadge status={live.status} />
+      <div className="mt-4 mb-6 flex items-center gap-4">
+        {live.speakerPhoto && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={live.speakerPhoto}
+            alt={live.speakerName || 'Palestrante'}
+            className="h-16 w-16 rounded-full object-cover border-2 border-gold-500 shrink-0"
+          />
+        )}
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-navy-950">{live.title}</h1>
+            <LiveStatusBadge status={live.status} />
+          </div>
+          <p className="text-gray-500 mt-1">
+            {live.speakerName && (
+              <span className="font-medium text-navy-900">{live.speakerName} · </span>
+            )}
+            {live.course.title} · {dateFormatter.format(live.scheduledAt)}
+          </p>
+        </div>
       </div>
 
-      <p className="text-gray-500 mb-6">
-        {live.course.title} · {dateFormatter.format(live.scheduledAt)}
-      </p>
-
-      {live.embedUrl ? (
-        <div className="rounded-2xl overflow-hidden border border-gray-200 bg-black shadow-sm">
-          <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
-            <iframe
-              src={live.embedUrl}
-              className="absolute inset-0 h-full w-full"
-              allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-              allowFullScreen
-              title={live.title}
-            />
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px] items-stretch">
+        {live.embedUrl ? (
+          <div className="rounded-2xl overflow-hidden border border-gray-200 bg-black shadow-sm self-start">
+            <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+              <iframe
+                src={toEmbedUrl(live.embedUrl)}
+                className="absolute inset-0 h-full w-full"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowFullScreen
+                title={live.title}
+              />
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-16 text-center">
-          <p className="text-4xl mb-4">🎥</p>
-          <p className="text-lg font-semibold text-navy-950 mb-2">
-            Transmissão ainda não liberada
-          </p>
-          <p className="text-gray-500 max-w-md mx-auto">
-            O link da transmissão será disponibilizado aqui{' '}
-            {live.status === 'SCHEDULED' ? 'antes do início da aula' : 'em breve'}.
-            Atualize a página perto do horário marcado.
-          </p>
-        </div>
-      )}
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-16 text-center flex flex-col items-center justify-center">
+            <p className="text-4xl mb-4">🎥</p>
+            <p className="text-lg font-semibold text-navy-950 mb-2">
+              Transmissão ainda não liberada
+            </p>
+            <p className="text-gray-500 max-w-md mx-auto">
+              O link da transmissão será disponibilizado aqui{' '}
+              {live.status === 'SCHEDULED' ? 'antes do início da palestra' : 'em breve'}.
+              Atualize a página perto do horário marcado.
+            </p>
+          </div>
+        )}
+
+        <LiveChat liveId={live.id} canModerate={session.user.role === 'ADMIN'} />
+      </div>
 
       {live.description && (
         <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
-          <h2 className="font-semibold text-navy-950 mb-2">Sobre esta aula</h2>
+          <h2 className="font-semibold text-navy-950 mb-2">Sobre esta palestra</h2>
           <p className="text-gray-600 whitespace-pre-line">{live.description}</p>
         </div>
       )}

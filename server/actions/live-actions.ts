@@ -20,23 +20,26 @@ export async function createLive(formData: unknown): Promise<ActionResponse> {
       return { success: false, error: parsed.error.issues[0].message }
     }
 
-    const { courseId, title, description, scheduledAt, embedUrl } = parsed.data
+    const { courseId, title, description, speakerName, speakerPhoto, scheduledAt, embedUrl } =
+      parsed.data
 
     await prisma.live.create({
       data: {
         courseId,
         title,
         description: description || null,
+        speakerName: speakerName || null,
+        speakerPhoto: speakerPhoto || null,
         scheduledAt,
         embedUrl: embedUrl || null,
       },
     })
 
     revalidateLives()
-    return { success: true, message: 'Aula ao vivo agendada' }
+    return { success: true, message: 'Palestra agendada' }
   } catch (error) {
     console.error('createLive:', error)
-    return { success: false, error: 'Erro ao agendar aula' }
+    return { success: false, error: 'Erro ao agendar palestra' }
   }
 }
 
@@ -52,7 +55,8 @@ export async function updateLive(
       return { success: false, error: parsed.error.issues[0].message }
     }
 
-    const { courseId, title, description, scheduledAt, embedUrl } = parsed.data
+    const { courseId, title, description, speakerName, speakerPhoto, scheduledAt, embedUrl } =
+      parsed.data
 
     await prisma.live.update({
       where: { id: liveId },
@@ -60,16 +64,18 @@ export async function updateLive(
         courseId,
         title,
         description: description || null,
+        speakerName: speakerName || null,
+        speakerPhoto: speakerPhoto || null,
         scheduledAt,
         embedUrl: embedUrl || null,
       },
     })
 
     revalidateLives()
-    return { success: true, message: 'Aula atualizada' }
+    return { success: true, message: 'Palestra atualizada' }
   } catch (error) {
     console.error('updateLive:', error)
-    return { success: false, error: 'Erro ao atualizar aula' }
+    return { success: false, error: 'Erro ao atualizar palestra' }
   }
 }
 
@@ -86,7 +92,7 @@ export async function setLiveStatus(
     return { success: true }
   } catch (error) {
     console.error('setLiveStatus:', error)
-    return { success: false, error: 'Erro ao alterar status da aula' }
+    return { success: false, error: 'Erro ao alterar status da palestra' }
   }
 }
 
@@ -97,9 +103,9 @@ export async function deleteLive(liveId: string): Promise<ActionResponse> {
     await prisma.live.delete({ where: { id: liveId } })
 
     revalidateLives()
-    return { success: true, message: 'Aula excluída' }
+    return { success: true, message: 'Palestra excluída' }
   } catch (error) {
     console.error('deleteLive:', error)
-    return { success: false, error: 'Erro ao excluir aula' }
+    return { success: false, error: 'Erro ao excluir palestra' }
   }
 }

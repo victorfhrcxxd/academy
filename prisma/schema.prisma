@@ -23,7 +23,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  enrollments Enrollment[]
+  enrollments  Enrollment[]
+  chatMessages ChatMessage[]
 
   @@index([role])
   @@index([status])
@@ -47,20 +48,37 @@ model Course {
 // Transmissão ao vivo de uma aula do curso presencial.
 // embedUrl fica null até a plataforma de transmissão ser definida/configurada.
 model Live {
-  id          String   @id @default(cuid())
-  courseId    String
-  title       String
-  description String?
-  scheduledAt DateTime
-  embedUrl    String?
-  status      String   @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
+  id           String   @id @default(cuid())
+  courseId     String
+  title        String // tema da palestra
+  description  String?
+  speakerName  String? // professor palestrante
+  speakerPhoto String? // foto (data URL ou link https)
+  scheduledAt  DateTime
+  embedUrl     String?
+  status       String   @default("SCHEDULED") // SCHEDULED | LIVE | ENDED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course   Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
 
   @@index([courseId])
   @@index([status])
+}
+
+// Mensagem do chat ao vivo de uma palestra
+model ChatMessage {
+  id        String   @id @default(cuid())
+  liveId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  live Live @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([liveId, createdAt])
 }
 
 // Vínculo aluno ↔ curso (matrícula feita manualmente pelo admin)

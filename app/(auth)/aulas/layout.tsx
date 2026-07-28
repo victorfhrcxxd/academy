@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import SignOutButton from '@/components/SignOutButton'
 import DevToolsBlocker from '@/components/DevToolsBlocker'
-import NextLiveBanner from '@/components/NextLiveBanner'
 import SupportButton from '@/components/SupportButton'
 import type { ReactNode } from 'react'
 
@@ -67,8 +66,6 @@ export default async function MemberLayout({ children }: { children: ReactNode }
             <SignOutButton />
           </div>
         </header>
-
-        {session?.user?.role !== 'ADMIN' && <NextLiveBanner />}
 
         <main className="flex-1 overflow-auto px-6 py-8">{children}</main>
       </div>

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import NextLiveCard from '@/components/NextLiveCard'
 
 export const metadata = { title: 'Cursos adquiridos — Valeriote Cursos' }
 
@@ -27,6 +28,8 @@ export default async function MemberCoursesPage() {
         Olá, {session.user.name?.split(' ')[0]} 👋
       </h1>
       <p className="text-gray-500 mb-8">Estes são os cursos que você adquiriu.</p>
+
+      <NextLiveCard />
 
       {enrollments.length === 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-10 text-center">

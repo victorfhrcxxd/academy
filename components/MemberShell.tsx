@@ -73,10 +73,22 @@ export default function MemberShell({
             {/* Botão de esconder/mostrar o menu (desktop) */}
             <button
               onClick={toggle}
-              className="hidden md:inline-flex items-center justify-center h-9 w-9 rounded-lg border border-gray-300 text-navy-950 hover:bg-gray-100 transition"
+              className="hidden md:inline-flex items-center justify-center h-9 w-9 rounded-lg text-gray-500 hover:text-navy-950 hover:bg-gray-100 active:scale-95 transition"
               title={collapsed ? 'Mostrar menu' : 'Esconder menu'}
             >
-              {collapsed ? '☰' : '⬅'}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+              >
+                <rect x="3" y="4" width="18" height="16" rx="2.5" />
+                <path d="M9.5 4v16" />
+                {collapsed ? <path d="m13.5 9.5 3 2.5-3 2.5" /> : <path d="m16.5 9.5-3 2.5 3 2.5" />}
+              </svg>
             </button>
 
             {/* Menu horizontal no mobile */}

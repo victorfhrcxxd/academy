@@ -27,11 +27,30 @@ export default function LiveRoom({
     localStorage.setItem('valeriote-chat', next ? 'visivel' : 'oculto')
   }
 
-  if (!showChat) {
-    return (
-      <>
-        {main}
-        {/* Abinha na borda direita pra reabrir o painel */}
+  // A estrutura é sempre a mesma nos dois estados — o painel só é ocultado
+  // via CSS. Assim o player NÃO é remontado (o vídeo não reinicia) e o chat
+  // mantém as mensagens ao esconder/mostrar.
+  return (
+    <>
+      <div
+        className={`grid gap-6 items-start ${
+          showChat ? 'lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]' : 'grid-cols-1'
+        }`}
+      >
+        <div>{main}</div>
+        <div
+          className={
+            showChat
+              ? 'lg:h-[calc(100vh-230px)] lg:min-h-[540px] lg:sticky lg:top-6'
+              : 'hidden'
+          }
+        >
+          <LiveSidePanel liveId={liveId} canModerate={canModerate} onHide={toggle} />
+        </div>
+      </div>
+
+      {/* Abinha na borda direita pra reabrir o painel */}
+      {!showChat && (
         <button
           onClick={toggle}
           className="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 rounded-l-xl bg-navy-950 hover:bg-navy-800 text-white pl-2.5 pr-2 py-4 shadow-lg transition group"
@@ -51,16 +70,7 @@ export default function LiveRoom({
           </svg>
           <span className="text-base">💬</span>
         </button>
-      </>
-    )
-  }
-
-  return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px] items-start">
-      <div>{main}</div>
-      <div className="lg:h-[calc(100vh-230px)] lg:min-h-[540px] lg:sticky lg:top-6">
-        <LiveSidePanel liveId={liveId} canModerate={canModerate} onHide={toggle} />
-      </div>
-    </div>
+      )}
+    </>
   )
 }

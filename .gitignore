@@ -79,3 +79,6 @@ prisma/dev.db-journal
 *.pid.lock
 
 .vercel
+
+# Backups do banco (nunca commitar - contem dados de usuarios)
+backups/

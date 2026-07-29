@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import MiniCountdown from '@/components/MiniCountdown'
+import DayProgram from '@/components/DayProgram'
 import SurveyCard from '@/components/SurveyCard'
 
 const dayFormatter = new Intl.DateTimeFormat('pt-BR', {
@@ -168,12 +169,9 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                 )}
               </div>
 
-              {/* Programação do dia */}
+              {/* Programação do dia (recolhida por padrão) */}
               {day.talks.length > 0 && (
-                <div className="border-t border-gray-100 px-6 py-4 bg-gray-50/60">
-                  <p className="text-xs font-bold uppercase text-gray-400 mb-3">
-                    Programação do dia
-                  </p>
+                <DayProgram count={day.talks.length}>
                   <div className="space-y-2.5">
                     {day.talks.map((talk) => (
                       <div
@@ -210,7 +208,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                       </div>
                     ))}
                   </div>
-                </div>
+                </DayProgram>
               )}
             </div>
           )

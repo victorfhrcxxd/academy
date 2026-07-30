@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import LiveSidePanel from '@/components/LiveSidePanel'
+import Icon from '@/components/Icon'
 
 // Sala de transmissão: player + painel lateral com opção de esconder o chat
 // (preferência salva no navegador; escondido, o player ocupa a largura toda)
@@ -68,7 +69,7 @@ export default function LiveRoom({
             <path d="m17 6-6 6 6 6" />
             <path d="m11 6-6 6 6 6" />
           </svg>
-          <span className="text-base">💬</span>
+          <Icon name="message-circle" className="h-4 w-4" />
         </button>
       )}
     </>

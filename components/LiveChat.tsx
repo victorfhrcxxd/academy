@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Icon from '@/components/Icon'
 
 interface ChatMessage {
   id: string
@@ -158,7 +159,9 @@ export default function LiveChat({
     >
       <div className="px-4 py-3 border-b border-gray-200 bg-navy-950 text-white">
         <div className="flex items-center justify-between gap-2">
-          <p className="font-bold text-sm">💬 Chat ao vivo</p>
+          <p className="flex items-center gap-2 font-bold text-sm">
+            <Icon name="message-circle" className="h-4 w-4" /> Chat ao vivo
+          </p>
           {canModerate && (
             <div className="flex items-center gap-2">
               <select
@@ -167,22 +170,23 @@ export default function LiveChat({
                 className="rounded bg-navy-800 border border-white/20 text-xs px-1.5 py-1 text-white"
                 title="Modo lento: intervalo mínimo entre mensagens por aluno"
               >
-                <option value={0}>⏱ Sem delay</option>
-                <option value={5}>⏱ 5s</option>
-                <option value={10}>⏱ 10s</option>
-                <option value={30}>⏱ 30s</option>
-                <option value={60}>⏱ 1min</option>
+                <option value={0}>Sem delay</option>
+                <option value={5}>Delay 5s</option>
+                <option value={10}>Delay 10s</option>
+                <option value={30}>Delay 30s</option>
+                <option value={60}>Delay 1min</option>
               </select>
               <button
                 onClick={() => updateSettings({ locked: !settings.locked })}
-                className={`rounded px-2 py-1 text-xs font-bold ${
+                className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-bold ${
                   settings.locked
                     ? 'bg-red-600 hover:bg-red-700'
                     : 'bg-navy-800 border border-white/20 hover:bg-navy-700'
                 }`}
                 title={settings.locked ? 'Desbloquear chat' : 'Bloquear chat'}
               >
-                {settings.locked ? '🔒 Bloqueado' : '🔓 Aberto'}
+                <Icon name={settings.locked ? 'lock' : 'unlock'} className="h-3 w-3" />
+                {settings.locked ? 'Bloqueado' : 'Aberto'}
               </button>
             </div>
           )}
@@ -213,9 +217,9 @@ export default function LiveChat({
             ) : (
               <button
                 onClick={() => setShowNameInput(true)}
-                className="text-[11px] text-white/60 hover:text-white"
+                className="flex items-center gap-1.5 text-[11px] text-white/60 hover:text-white"
               >
-                ✎ Aparecer no chat como:{' '}
+                <Icon name="edit" className="h-3 w-3" /> Aparecer no chat como:{' '}
                 <span className="font-bold text-gold-400">
                   {displayName || 'seu nome real'}
                 </span>
@@ -229,8 +233,8 @@ export default function LiveChat({
         <div className="border-b border-gold-500/40 bg-gold-500/10 px-4 py-2.5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[11px] font-bold text-gold-600 uppercase">
-                📌 Fixado · {pinned.author}
+              <p className="flex items-center gap-1 text-[11px] font-bold text-gold-600 uppercase">
+                <Icon name="pin" className="h-3 w-3" /> Fixado · {pinned.author}
               </p>
               <p className="text-sm text-navy-950 break-words whitespace-pre-line">
                 {pinned.text}
@@ -242,7 +246,7 @@ export default function LiveChat({
                 className="text-[11px] text-gray-500 hover:text-red-600 shrink-0"
                 title="Desafixar"
               >
-                ✕ desafixar
+                desafixar
               </button>
             )}
           </div>
@@ -256,7 +260,7 @@ export default function LiveChat({
       >
         {messages.length === 0 && (
           <p className="text-sm text-gray-400 text-center mt-8">
-            Nenhuma mensagem ainda — seja o primeiro a comentar! 👋
+            Nenhuma mensagem ainda — seja o primeiro a comentar!
           </p>
         )}
         {messages.map((m) => (
@@ -280,7 +284,7 @@ export default function LiveChat({
                     className="hidden group-hover:inline text-[11px] text-navy-700 hover:underline"
                     title="Fixar no topo do chat"
                   >
-                    📌 fixar
+                    fixar
                   </button>
                   <button
                     onClick={() => remove(m.id)}
@@ -306,7 +310,7 @@ export default function LiveChat({
             maxLength={500}
             disabled={inputDisabled}
             placeholder={
-              inputDisabled ? '🔒 Chat bloqueado pela equipe' : 'Escreva sua mensagem...'
+              inputDisabled ? 'Chat bloqueado pela equipe' : 'Escreva sua mensagem...'
             }
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-navy-900 focus:ring-2 focus:ring-navy-900/15 disabled:bg-gray-100 disabled:text-gray-400"
           />

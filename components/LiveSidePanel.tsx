@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import LiveChat from '@/components/LiveChat'
 import QuestionsPanel from '@/components/QuestionsPanel'
+import Icon from '@/components/Icon'
 
 // Painel lateral da transmissão: abas Chat e Perguntas (Q&A) + botão de recolher
 export default function LiveSidePanel({
@@ -17,7 +18,7 @@ export default function LiveSidePanel({
   const [tab, setTab] = useState<'chat' | 'questions'>('chat')
 
   const tabCls = (active: boolean) =>
-    `flex-1 px-4 py-3 text-sm font-bold transition ${
+    `flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-bold transition ${
       active ? 'text-gold-400 border-b-2 border-gold-500' : 'text-white/60 hover:text-white'
     }`
 
@@ -25,10 +26,10 @@ export default function LiveSidePanel({
     <div className="flex flex-col rounded-2xl border border-gray-200 bg-white overflow-hidden h-[440px] lg:h-full">
       <div className="flex items-stretch border-b border-gray-200 bg-navy-950">
         <button onClick={() => setTab('chat')} className={tabCls(tab === 'chat')}>
-          💬 Chat
+          <Icon name="message-circle" className="h-4 w-4" /> Chat
         </button>
         <button onClick={() => setTab('questions')} className={tabCls(tab === 'questions')}>
-          🙋 Perguntas
+          <Icon name="help-circle" className="h-4 w-4" /> Perguntas
         </button>
         {onHide && (
           <button

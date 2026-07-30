@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import Icon from '@/components/Icon'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -60,7 +61,9 @@ export default function LoginForm() {
       <div>
         <label className="block text-sm font-medium text-navy-950 mb-1.5">E-mail</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">✉</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Icon name="mail" className="h-4 w-4" />
+          </span>
           <input
             type="email"
             value={email}
@@ -76,7 +79,9 @@ export default function LoginForm() {
       <div>
         <label className="block text-sm font-medium text-navy-950 mb-1.5">Senha</label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔒</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Icon name="lock" className="h-4 w-4" />
+          </span>
           <input
             type={showPassword ? 'text' : 'password'}
             value={password}
@@ -90,10 +95,10 @@ export default function LoginForm() {
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy-900 text-sm"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-navy-900"
             aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
           >
-            {showPassword ? '🙈' : '👁'}
+            <Icon name={showPassword ? 'eye-off' : 'eye'} className="h-4 w-4" />
           </button>
         </div>
       </div>

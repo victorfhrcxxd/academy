@@ -7,6 +7,7 @@ import LiveStatusBadge from '@/components/LiveStatusBadge'
 import MiniCountdown from '@/components/MiniCountdown'
 import DayProgram from '@/components/DayProgram'
 import SurveyCard from '@/components/SurveyCard'
+import Icon from '@/components/Icon'
 
 const dayFormatter = new Intl.DateTimeFormat('pt-BR', {
   weekday: 'long',
@@ -129,7 +130,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                       {day.status === 'LIVE'
                         ? '● Assistir ao vivo'
                         : day.status === 'ENDED' && day.replayUrl
-                          ? '🎬 Assistir gravação'
+                          ? 'Assistir gravação'
                           : 'Entrar na transmissão'}
                     </Link>
                   </div>
@@ -196,7 +197,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                           />
                         ) : (
                           <div className="h-11 w-11 rounded-full bg-navy-900/10 flex items-center justify-center text-navy-900 shrink-0">
-                            🎤
+                            <Icon name="mic" className="h-5 w-5" />
                           </div>
                         )}
                         <div className="min-w-0">

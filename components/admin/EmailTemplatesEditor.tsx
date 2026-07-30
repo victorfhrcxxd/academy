@@ -89,7 +89,7 @@ export default function EmailTemplatesEditor({ templates }: { templates: Templat
                 : 'bg-white border border-gray-300 text-gray-600 hover:border-navy-600'
             }`}
           >
-            ✉️ {t.name}
+            {t.name}
           </button>
         ))}
       </div>
@@ -152,7 +152,7 @@ export default function EmailTemplatesEditor({ templates }: { templates: Templat
               disabled={isPending}
               className="rounded-lg bg-gold-500 hover:bg-gold-600 px-5 py-2.5 text-sm font-bold text-navy-950 transition disabled:opacity-60"
             >
-              📤 Enviar teste pra mim
+              Enviar teste pra mim
             </button>
             {current.customized && (
               <button

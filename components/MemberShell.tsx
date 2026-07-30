@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import SignOutButton from '@/components/SignOutButton'
+import Icon from '@/components/Icon'
 import type { ReactNode } from 'react'
 
 const menuItems = [
-  { href: '/aulas', label: 'Cursos adquiridos', icon: '📚' },
-  { href: '/aulas/certificados', label: 'Certificados', icon: '🎓' },
-  { href: '/aulas/perfil', label: 'Minha conta', icon: '👤' },
+  { href: '/aulas', label: 'Cursos adquiridos', icon: 'book-open' },
+  { href: '/aulas/certificados', label: 'Certificados', icon: 'graduation-cap' },
+  { href: '/aulas/perfil', label: 'Minha conta', icon: 'user' },
 ]
 
 // Casca da área do aluno com sidebar recolhível (estado salvo no navegador)
@@ -53,9 +54,9 @@ export default function MemberShell({
             <Link
               key={item.href}
               href={item.href}
-              className="block rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-navy-800 whitespace-nowrap"
+              className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-navy-800 whitespace-nowrap"
             >
-              <span className="mr-2">{item.icon}</span>
+              <Icon name={item.icon} className="h-4 w-4 text-gold-400" />
               {item.label}
             </Link>
           ))}
@@ -94,8 +95,13 @@ export default function MemberShell({
             {/* Menu horizontal no mobile */}
             <nav className="flex md:hidden gap-4 text-sm font-medium text-navy-900 overflow-x-auto">
               {menuItems.map((item) => (
-                <Link key={item.href} href={item.href} className="whitespace-nowrap">
-                  {item.icon} {item.label}
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <Icon name={item.icon} className="h-4 w-4" />
+                  {item.label}
                 </Link>
               ))}
             </nav>

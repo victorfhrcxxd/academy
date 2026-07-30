@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Icon from '@/components/Icon'
 
 interface Question {
   id: string
@@ -101,7 +102,7 @@ export default function QuestionsPanel({
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {questions.length === 0 && (
           <p className="text-sm text-gray-400 text-center mt-8">
-            Nenhuma pergunta ainda — envie a primeira! 🙋
+            Nenhuma pergunta ainda — envie a primeira!
           </p>
         )}
         {questions.map((q) => (
@@ -121,7 +122,7 @@ export default function QuestionsPanel({
                 }`}
                 title={q.myVote ? 'Remover voto' : 'Também quero saber'}
               >
-                <span>👍</span>
+                <Icon name="thumbs-up" className="h-3.5 w-3.5" />
                 <span className="font-bold">{q.votes}</span>
               </button>
               <div className="min-w-0 flex-1">
@@ -131,8 +132,8 @@ export default function QuestionsPanel({
                 <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-400 flex-wrap">
                   <span>{q.author}</span>
                   {q.answered && (
-                    <span className="rounded-full bg-green-100 text-green-700 px-2 py-0.5 font-bold">
-                      ✓ Respondida
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 font-bold">
+                      <Icon name="check" className="h-3 w-3" /> Respondida
                     </span>
                   )}
                   {canModerate && (

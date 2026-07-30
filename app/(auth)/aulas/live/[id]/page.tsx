@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import LiveRoom from '@/components/LiveRoom'
+import Icon from '@/components/Icon'
 import ProtectedPlayer from '@/components/ProtectedPlayer'
 import AttendanceTracker from '@/components/AttendanceTracker'
 
@@ -70,8 +71,8 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
           <h1 className="text-2xl font-bold text-navy-950">{live.title}</h1>
           <LiveStatusBadge status={live.status} />
           {showReplay && (
-            <span className="rounded-full bg-navy-900/10 text-navy-900 px-3 py-1 text-xs font-bold">
-              🎬 Gravação
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-navy-900/10 text-navy-900 px-3 py-1 text-xs font-bold">
+              <Icon name="film" className="h-3.5 w-3.5" /> Gravação
             </span>
           )}
         </div>
@@ -94,7 +95,7 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
             />
           ) : (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-16 text-center flex flex-col items-center justify-center">
-              <p className="text-4xl mb-4">🎥</p>
+              <Icon name="video" className="h-12 w-12 text-gray-300 mb-4" />
               <p className="text-lg font-semibold text-navy-950 mb-2">
                 Transmissão ainda não liberada
               </p>
@@ -108,7 +109,9 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
 
           {live.talks.length > 0 && (
             <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
-              <h2 className="font-bold text-navy-950 mb-4">🗓 Programação do dia</h2>
+              <h2 className="flex items-center gap-2 font-bold text-navy-950 mb-4">
+                <Icon name="calendar" className="h-4 w-4 text-gold-600" /> Programação do dia
+              </h2>
               <div className="space-y-4">
                 {live.talks.map((talk) => (
                   <div key={talk.id} className="flex items-start gap-4">
@@ -121,7 +124,7 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
                       />
                     ) : (
                       <div className="h-12 w-12 rounded-full bg-navy-900/10 flex items-center justify-center text-navy-900 shrink-0">
-                        🎤
+                        <Icon name="mic" className="h-5 w-5" />
                       </div>
                     )}
                     <div className="min-w-0">
@@ -149,7 +152,9 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
 
           {live.materials.length > 0 && (
             <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
-              <h2 className="font-bold text-navy-950 mb-4">📎 Materiais do dia</h2>
+              <h2 className="flex items-center gap-2 font-bold text-navy-950 mb-4">
+                <Icon name="paperclip" className="h-4 w-4 text-gold-600" /> Materiais do dia
+              </h2>
               <div className="space-y-2">
                 {live.materials.map((m) => (
                   <a
@@ -159,11 +164,12 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
                     rel="noreferrer"
                     className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 px-4 py-3 hover:border-navy-600/40 hover:bg-navy-900/5 transition"
                   >
-                    <span className="text-sm font-medium text-navy-950 truncate">
-                      📄 {m.title}
+                    <span className="flex items-center gap-2 text-sm font-medium text-navy-950 truncate">
+                      <Icon name="file-text" className="h-4 w-4 text-gray-400 shrink-0" />
+                      {m.title}
                     </span>
-                    <span className="text-xs font-bold text-navy-700 shrink-0">
-                      Baixar ↓
+                    <span className="flex items-center gap-1 text-xs font-bold text-navy-700 shrink-0">
+                      <Icon name="download" className="h-3.5 w-3.5" /> Baixar
                     </span>
                   </a>
                 ))}

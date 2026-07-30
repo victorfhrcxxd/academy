@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import LoginForm from '@/components/forms/LoginForm'
+import Icon from '@/components/Icon'
 
 export const metadata = {
   title: 'Entrar — Valeriote Cursos',
@@ -21,17 +22,17 @@ function BrandMark({ size = 'md' }: { size?: 'md' | 'lg' }) {
 
 const highlights = [
   {
-    icon: '🎥',
+    icon: 'video',
     title: 'Palestras ao vivo',
     text: 'Assista à transmissão do evento presencial em tempo real, de onde estiver.',
   },
   {
-    icon: '🎓',
+    icon: 'graduation-cap',
     title: 'Área de membros',
     text: 'Acesso exclusivo para alunos com inscrição confirmada.',
   },
   {
-    icon: '💬',
+    icon: 'message-circle',
     title: 'Chat ao vivo',
     text: 'Comente e interaja com os outros participantes durante as palestras.',
   },
@@ -102,8 +103,8 @@ export default async function LoginPage() {
                 key={h.title}
                 className="flex items-start gap-4 rounded-xl bg-white/5 border border-white/10 px-5 py-4"
               >
-                <div className="h-10 w-10 shrink-0 rounded-lg bg-navy-800 border border-white/10 flex items-center justify-center text-lg">
-                  {h.icon}
+                <div className="h-10 w-10 shrink-0 rounded-lg bg-navy-800 border border-white/10 flex items-center justify-center text-gold-400">
+                  <Icon name={h.icon} className="h-5 w-5" />
                 </div>
                 <div>
                   <p className="font-semibold text-white">{h.title}</p>

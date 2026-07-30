@@ -75,7 +75,7 @@ export default function NextLiveCard() {
           href={`/aulas/live/${next.id}`}
           className="inline-block rounded-xl bg-white text-red-700 font-black px-8 py-3 hover:bg-red-50 transition"
         >
-          ▶ Assistir agora
+          Assistir agora
         </Link>
       </div>
     )
@@ -100,7 +100,7 @@ export default function NextLiveCard() {
       <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
         <div className="flex-1 min-w-0">
           <p className="text-xs font-bold tracking-widest text-gold-400 mb-2">
-            🗓 SEU EVENTO COMEÇA EM
+            SEU EVENTO COMEÇA EM
           </p>
           <h2 className="text-lg sm:text-2xl font-bold leading-snug mb-1">
             {next.courseTitle}

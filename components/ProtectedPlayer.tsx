@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { toEmbedUrl } from '@/lib/embed'
+import Icon from '@/components/Icon'
 
 // Player protegido (YouTube): oculta título/controles nativos, bloqueia cliques no
 // vídeo (não dá pra pausar nem abrir no YouTube) e oferece controles próprios
@@ -104,8 +105,8 @@ export default function ProtectedPlayer({
               onClick={start}
               className="absolute inset-0 z-20 flex items-center justify-center bg-black/60"
             >
-              <span className="rounded-full bg-gold-500 hover:bg-gold-600 text-navy-950 font-black px-8 py-4 text-lg shadow-lg transition">
-                ▶ Assistir com som
+              <span className="flex items-center gap-3 rounded-full bg-gold-500 hover:bg-gold-600 text-navy-950 font-black px-8 py-4 text-lg shadow-lg transition">
+                <Icon name="play" className="h-5 w-5 fill-current" /> Assistir com som
               </span>
             </button>
           )}
@@ -116,8 +117,8 @@ export default function ProtectedPlayer({
           <span className="flex items-center gap-2 text-xs font-bold text-red-500">
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" /> AO VIVO
           </span>
-          <button onClick={toggleMute} className="text-lg" title={muted ? 'Ativar som' : 'Silenciar'}>
-            {muted ? '🔇' : '🔊'}
+          <button onClick={toggleMute} title={muted ? 'Ativar som' : 'Silenciar'}>
+            <Icon name={muted ? 'volume-x' : 'volume'} className="h-5 w-5" />
           </button>
           <input
             type="range"
@@ -131,10 +132,10 @@ export default function ProtectedPlayer({
           <div className="flex-1" />
           <button
             onClick={goFullscreen}
-            className="text-sm font-bold hover:text-gold-400"
+            className="flex items-center gap-2 text-sm font-bold hover:text-gold-400"
             title="Tela cheia"
           >
-            ⛶ Tela cheia
+            <Icon name="maximize" className="h-4 w-4" /> Tela cheia
           </button>
         </div>
       </div>

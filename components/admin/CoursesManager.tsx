@@ -177,8 +177,8 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
               <p className="text-sm text-gray-500 mb-3">{c.description}</p>
             )}
             <p className="text-sm text-gray-600 mb-4">
-              👥 {c.students} aluno{c.students === 1 ? '' : 's'} · 🎥 {c.lives} aula
-              {c.lives === 1 ? '' : 's'}
+              {c.students} aluno{c.students === 1 ? '' : 's'} · {c.lives} dia
+              {c.lives === 1 ? '' : 's'} de transmissão
             </p>
             <div className="flex gap-2 text-xs font-medium">
               <button

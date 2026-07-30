@@ -3,15 +3,16 @@ import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import SignOutButton from '@/components/SignOutButton'
+import Icon from '@/components/Icon'
 import type { ReactNode } from 'react'
 
 const menuItems = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
-  { href: '/admin/membros', label: 'Alunos', icon: '👥' },
-  { href: '/admin/cursos', label: 'Cursos', icon: '🎓' },
-  { href: '/admin/lives', label: 'Transmissões', icon: '🎥' },
-  { href: '/admin/avaliacoes', label: 'Avaliações', icon: '⭐' },
-  { href: '/admin/emails', label: 'Emails', icon: '✉️' },
+  { href: '/admin', label: 'Dashboard', icon: 'dashboard' },
+  { href: '/admin/membros', label: 'Alunos', icon: 'users' },
+  { href: '/admin/cursos', label: 'Cursos', icon: 'book-open' },
+  { href: '/admin/lives', label: 'Transmissões', icon: 'video' },
+  { href: '/admin/avaliacoes', label: 'Avaliações', icon: 'star' },
+  { href: '/admin/emails', label: 'Emails', icon: 'mail' },
 ]
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -38,9 +39,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <Link
               key={item.href}
               href={item.href}
-              className="block rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-navy-800"
+              className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-navy-800"
             >
-              <span className="mr-2">{item.icon}</span>
+              <Icon name={item.icon} className="h-4 w-4 text-gold-400" />
               {item.label}
             </Link>
           ))}
@@ -55,10 +56,15 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       <div className="flex-1 flex flex-col min-w-0">
         <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
           {/* Menu horizontal no mobile */}
-          <nav className="flex md:hidden gap-3 text-sm font-medium text-navy-900 overflow-x-auto">
+          <nav className="flex md:hidden gap-4 text-sm font-medium text-navy-900 overflow-x-auto">
             {menuItems.map((item) => (
-              <Link key={item.href} href={item.href} className="whitespace-nowrap">
-                {item.icon} {item.label}
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <Icon name={item.icon} className="h-4 w-4" />
+                {item.label}
               </Link>
             ))}
           </nav>

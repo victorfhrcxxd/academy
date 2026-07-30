@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import Icon from '@/components/Icon'
 
 export const metadata = { title: 'Avaliações — Admin Valeriote' }
 export const dynamic = 'force-dynamic'
@@ -46,8 +47,9 @@ export default async function AdminSurveysPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <h2 className="font-bold text-navy-950">{course.title}</h2>
               {avg ? (
-                <p className="text-sm">
-                  <span className="text-xl font-bold text-navy-950">⭐ {avg}</span>
+                <p className="flex items-center gap-1.5 text-sm">
+                  <Icon name="star-filled" className="h-5 w-5 text-gold-500" />
+                  <span className="text-xl font-bold text-navy-950">{avg}</span>
                   <span className="text-gray-500"> · {list.length} avaliação{list.length === 1 ? '' : 'ões'}</span>
                 </p>
               ) : (
@@ -62,9 +64,13 @@ export default async function AdminSurveysPage() {
                   return (
                     <div key={r.id} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
                       <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-medium text-navy-950">
-                          {'⭐'.repeat(r.rating)}
-                          <span className="text-gray-400 font-normal"> · {u?.name || '—'}</span>
+                        <p className="flex items-center gap-0.5 text-sm font-medium text-navy-950">
+                          {Array.from({ length: r.rating }).map((_, i) => (
+                            <Icon key={i} name="star-filled" className="h-4 w-4 text-gold-500" />
+                          ))}
+                          <span className="text-gray-400 font-normal ml-1.5">
+                            {u?.name || '—'}
+                          </span>
                         </p>
                         <p className="text-xs text-gray-400">
                           {dateFormatter.format(r.createdAt)}

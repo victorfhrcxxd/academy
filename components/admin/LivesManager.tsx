@@ -14,6 +14,7 @@ import { sendReminderNow } from '@/server/actions/reminder-actions'
 import { upload } from '@vercel/blob/client'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import AdminLiveMetrics from '@/components/admin/AdminLiveMetrics'
+import Icon from '@/components/Icon'
 
 interface Course {
   id: string
@@ -524,16 +525,16 @@ export default function LivesManager({
                     <span className="ml-2 text-amber-600 font-medium">· sem link ainda</span>
                   )}
                   {d.replayUrl && (
-                    <span className="ml-2 text-green-700 font-medium">· 🎬 replay ok</span>
+                    <span className="ml-2 text-green-700 font-medium">· gravação ok</span>
                   )}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 text-xs font-medium">
                 <Link
                   href={`/aulas/live/${d.id}`}
-                  className="rounded-lg bg-navy-950 text-white px-3 py-1.5 hover:bg-navy-900"
+                  className="flex items-center gap-1.5 rounded-lg bg-navy-950 text-white px-3 py-1.5 hover:bg-navy-900"
                 >
-                  ▶ Assistir
+                  <Icon name="play" className="h-3 w-3" /> Assistir
                 </Link>
                 {d.status !== 'LIVE' && (
                   <button
@@ -576,15 +577,15 @@ export default function LivesManager({
                     setOpenProgram(openProgram === d.id ? null : d.id)
                     setShowTalkForm(false)
                   }}
-                  className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
+                  className="flex items-center gap-1.5 rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
                 >
-                  🗓 Programação ({d.talks.length})
+                  <Icon name="calendar" className="h-3.5 w-3.5" /> Programação ({d.talks.length})
                 </button>
                 <button
                   onClick={() => setOpenPresence(openPresence === d.id ? null : d.id)}
-                  className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
+                  className="flex items-center gap-1.5 rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
                 >
-                  👥 Presenças ({d.attendances.length})
+                  <Icon name="users" className="h-3.5 w-3.5" /> Presenças ({d.attendances.length})
                 </button>
                 <button
                   onClick={() => {
@@ -592,17 +593,17 @@ export default function LivesManager({
                     setMatTitle('')
                     setMatFile(null)
                   }}
-                  className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
+                  className="flex items-center gap-1.5 rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
                 >
-                  📎 Materiais ({d.materials.length})
+                  <Icon name="paperclip" className="h-3.5 w-3.5" /> Materiais ({d.materials.length})
                 </button>
                 <button
                   onClick={() => handleSendReminder(d)}
                   disabled={isPending}
-                  className="rounded-lg border border-gold-600/50 text-gold-600 px-3 py-1.5 hover:bg-gold-500/10 disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-lg border border-gold-600/50 text-gold-600 px-3 py-1.5 hover:bg-gold-500/10 disabled:opacity-50"
                   title="Enviar email de lembrete agora pra todos os alunos matriculados"
                 >
-                  📣 Lembrete
+                  <Icon name="megaphone" className="h-3.5 w-3.5" /> Lembrete
                 </button>
               </div>
             </div>
@@ -659,7 +660,8 @@ export default function LivesManager({
                           rel="noreferrer"
                           className="text-sm font-medium text-navy-900 hover:underline truncate"
                         >
-                          📄 {m.title}
+                          <Icon name="file-text" className="inline h-4 w-4 mr-1 text-gray-400" />
+                          {m.title}
                           {m.size ? (
                             <span className="text-gray-400 font-normal"> · {formatSize(m.size)}</span>
                           ) : null}
@@ -793,7 +795,7 @@ export default function LivesManager({
                           />
                         ) : (
                           <div className="h-12 w-12 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
-                            👤
+                            <Icon name="user" className="h-5 w-5" />
                           </div>
                         )}
                         <input
@@ -867,7 +869,7 @@ export default function LivesManager({
                           />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
-                            👤
+                            <Icon name="user" className="h-5 w-5" />
                           </div>
                         )}
                         <div className="min-w-0">

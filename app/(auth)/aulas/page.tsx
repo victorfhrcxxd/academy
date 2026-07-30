@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import NextLiveCard from '@/components/NextLiveCard'
+import Icon from '@/components/Icon'
 
 export const metadata = { title: 'Cursos adquiridos — Valeriote Cursos' }
 
@@ -25,7 +26,7 @@ export default async function MemberCoursesPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="text-2xl font-bold text-navy-950 mb-1">
-        Olá, {session.user.name?.split(' ')[0]} 👋
+        Olá, {session.user.name?.split(' ')[0]}
       </h1>
       <p className="text-gray-500 mb-8">Estes são os cursos que você adquiriu.</p>
 
@@ -50,8 +51,8 @@ export default async function MemberCoursesPage() {
             className="bg-white border border-gray-200 rounded-2xl p-6 flex flex-col"
           >
             <div className="flex items-start gap-3 mb-3">
-              <div className="h-11 w-11 rounded-xl bg-navy-950 text-gold-500 flex items-center justify-center text-xl shrink-0">
-                🎓
+              <div className="h-11 w-11 rounded-xl bg-navy-950 text-gold-500 flex items-center justify-center shrink-0">
+                <Icon name="graduation-cap" className="h-6 w-6" />
               </div>
               <div>
                 <h2 className="font-bold text-navy-950 leading-snug">{course.title}</h2>

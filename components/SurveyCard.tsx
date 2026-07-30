@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { submitSurvey } from '@/server/actions/survey-actions'
+import Icon from '@/components/Icon'
 
 // Card de avaliação do evento (aparece quando algum dia já encerrou)
 export default function SurveyCard({
@@ -37,7 +38,7 @@ export default function SurveyCard({
   if (sent && feedback?.ok) {
     return (
       <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
-        <p className="text-2xl mb-2">💛</p>
+        <Icon name="check" className="h-8 w-8 text-green-600 mx-auto mb-2" />
         <p className="font-semibold text-green-800">{feedback.text}</p>
       </div>
     )
@@ -63,12 +64,15 @@ export default function SurveyCard({
             type="button"
             onClick={() => setRating(n)}
             onMouseEnter={() => setHover(n)}
-            className={`text-3xl transition ${
-              n <= (hover || rating) ? 'grayscale-0 scale-110' : 'grayscale opacity-40'
+            className={`transition ${
+              n <= (hover || rating) ? 'text-gold-500 scale-110' : 'text-gray-300'
             }`}
             aria-label={`${n} estrela${n > 1 ? 's' : ''}`}
           >
-            ⭐
+            <Icon
+              name={n <= (hover || rating) ? 'star-filled' : 'star'}
+              className="h-8 w-8"
+            />
           </button>
         ))}
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Icon from '@/components/Icon'
 
 // Inibidor de DevTools para a área do aluno:
 // - bloqueia botão direito e atalhos de inspeção (F12, Ctrl+Shift+I/J/C, Ctrl+U/S)
@@ -44,7 +45,7 @@ export default function DevToolsBlocker() {
 
   return (
     <div className="fixed inset-0 z-[9999] bg-navy-950 text-white flex flex-col items-center justify-center px-6 text-center">
-      <p className="text-5xl mb-6">🔒</p>
+      <Icon name="lock" className="h-14 w-14 text-gold-500 mb-6" />
       <p className="text-xl font-bold mb-2">Ferramentas de desenvolvedor detectadas</p>
       <p className="text-white/70 max-w-md">
         Por segurança, o conteúdo fica indisponível enquanto o console do navegador

@@ -59,21 +59,22 @@ export default function NextLiveCard() {
 
   if (!next) return null
 
-  // AO VIVO agora
+  // AO VIVO agora — card navy da marca, com o vermelho só nos elementos de live
   if (next.status === 'LIVE') {
     return (
-      <div className="mb-8 rounded-2xl bg-gradient-to-br from-red-700 to-red-600 text-white p-6 sm:p-8 relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full border border-white/20" />
-        <p className="text-xs font-bold tracking-widest mb-2 flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-white animate-pulse" /> AO VIVO AGORA
-        </p>
+      <div className="mb-8 rounded-2xl bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white p-6 sm:p-8 relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full border border-white/10" />
+        <div className="absolute -bottom-16 right-24 h-36 w-36 rounded-full border border-white/5" />
+        <span className="inline-flex items-center gap-2 rounded-full bg-red-600 px-3 py-1 text-xs font-bold tracking-wide mb-3">
+          <span className="h-2 w-2 rounded-full bg-white animate-pulse" /> AO VIVO AGORA
+        </span>
         <h2 className="text-xl sm:text-2xl font-bold leading-snug mb-1">
           {next.courseTitle}
         </h2>
-        <p className="text-white/80 text-sm mb-5">{next.title}</p>
+        <p className="text-white/70 text-sm mb-5">{next.title}</p>
         <Link
           href={`/aulas/live/${next.id}`}
-          className="inline-block rounded-xl bg-white text-red-700 font-black px-8 py-3 hover:bg-red-50 transition"
+          className="inline-block rounded-xl bg-red-600 hover:bg-red-700 text-white font-black px-8 py-3 transition"
         >
           Assistir agora
         </Link>

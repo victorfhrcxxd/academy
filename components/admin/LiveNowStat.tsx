@@ -38,10 +38,12 @@ export default function LiveNowStat({ liveId }: { liveId: string }) {
       {items.map((i) => (
         <div
           key={i.label}
-          className="w-[4.5rem] rounded-xl bg-white/15 border border-white/20 py-2 text-center backdrop-blur-sm"
+          className="w-[4.5rem] rounded-xl bg-white/10 border border-white/10 py-2 text-center"
         >
-          <p className="text-xl font-black leading-none tabular-nums">{i.value}</p>
-          <p className="text-[10px] uppercase text-white/70 mt-1">{i.label}</p>
+          <p className="text-xl font-black leading-none tabular-nums text-gold-400">
+            {i.value}
+          </p>
+          <p className="text-[10px] uppercase text-white/60 mt-1">{i.label}</p>
         </div>
       ))}
     </div>

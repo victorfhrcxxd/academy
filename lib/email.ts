@@ -1,5 +1,8 @@
-// Envio de email via Resend (https://resend.com) usando a API HTTP direta.
-// Configuração por env: RESEND_API_KEY (obrigatória) e EMAIL_FROM (opcional).
+import nodemailer from 'nodemailer'
+
+// Envio de email via SMTP (Brevo). Configuração por env:
+// SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+// SMTP_FROM_EMAIL, SMTP_FROM_NAME, SMTP_REPLY_TO (opcional)
 export async function sendEmail({
   to,
   subject,
@@ -9,32 +12,32 @@ export async function sendEmail({
   subject: string
   html: string
 }): Promise<{ ok: boolean; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    return { ok: false, error: 'RESEND_API_KEY não configurada' }
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM_EMAIL, SMTP_FROM_NAME } =
+    process.env
+
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !SMTP_FROM_EMAIL) {
+    return { ok: false, error: 'SMTP não configurado' }
   }
 
-  const from = process.env.EMAIL_FROM || 'Valeriote Cursos <onboarding@resend.dev>'
-
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from, to: [to], subject, html }),
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: Number(SMTP_PORT || 587),
+      secure: Number(SMTP_PORT) === 465,
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
     })
 
-    if (!res.ok) {
-      const body = await res.text()
-      console.error('sendEmail falhou:', res.status, body)
-      return { ok: false, error: `Falha no envio (${res.status})` }
-    }
+    await transporter.sendMail({
+      from: `"${SMTP_FROM_NAME || 'Valeriote Cursos'}" <${SMTP_FROM_EMAIL}>`,
+      replyTo: process.env.SMTP_REPLY_TO || undefined,
+      to,
+      subject,
+      html,
+    })
 
     return { ok: true }
   } catch (error) {
     console.error('sendEmail erro:', error)
-    return { ok: false, error: 'Erro de conexão com o serviço de email' }
+    return { ok: false, error: 'Falha no envio do email' }
   }
 }

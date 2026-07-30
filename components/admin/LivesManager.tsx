@@ -10,6 +10,7 @@ import {
 } from '@/server/actions/live-actions'
 import { createTalk, updateTalk, deleteTalk } from '@/server/actions/talk-actions'
 import { createMaterial, deleteMaterial } from '@/server/actions/material-actions'
+import { sendReminderNow } from '@/server/actions/reminder-actions'
 import { upload } from '@vercel/blob/client'
 import LiveStatusBadge from '@/components/LiveStatusBadge'
 import AdminLiveMetrics from '@/components/admin/AdminLiveMetrics'
@@ -328,6 +329,19 @@ export default function LivesManager({
     })
   }
 
+  const handleSendReminder = (d: Day) => {
+    if (
+      !confirm(
+        `Enviar o email de lembrete de "${d.title}" AGORA para todos os alunos matriculados?`
+      )
+    )
+      return
+    startTransition(async () => {
+      const res = await sendReminderNow(d.id)
+      notify(res.success, res.success ? res.message || 'Lembretes enviados' : res.error || 'Erro')
+    })
+  }
+
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -581,6 +595,14 @@ export default function LivesManager({
                   className="rounded-lg border border-navy-600/40 text-navy-900 px-3 py-1.5 hover:bg-navy-900/5"
                 >
                   📎 Materiais ({d.materials.length})
+                </button>
+                <button
+                  onClick={() => handleSendReminder(d)}
+                  disabled={isPending}
+                  className="rounded-lg border border-gold-600/50 text-gold-600 px-3 py-1.5 hover:bg-gold-500/10 disabled:opacity-50"
+                  title="Enviar email de lembrete agora pra todos os alunos matriculados"
+                >
+                  📣 Lembrete
                 </button>
               </div>
             </div>

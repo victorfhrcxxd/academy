@@ -123,6 +123,14 @@ model QuestionVote {
   @@unique([questionId, userId])
 }
 
+// Template de email editável pelo admin (variáveis {{assim}})
+model EmailTemplate {
+  key       String   @id // lembrete | recuperar-senha
+  subject   String
+  body      String // HTML com variáveis
+  updatedAt DateTime @updatedAt
+}
+
 // Controle de lembretes enviados (evita email duplicado)
 model ReminderLog {
   id     String   @id @default(cuid())

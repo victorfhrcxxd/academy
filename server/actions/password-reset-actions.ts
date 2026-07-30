@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
+import { getTemplate, renderTemplate } from '@/lib/templates'
 import type { ActionResponse } from '@/types'
 
 // Solicita o link de redefinição. Sempre responde sucesso para não revelar
@@ -40,26 +41,12 @@ export async function requestPasswordReset(emailInput: unknown): Promise<ActionR
     const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
     const link = `${baseUrl}/redefinir-senha/${token}`
 
+    const template = await getTemplate('recuperar-senha')
+    const vars = { nome: user.name.split(' ')[0], link }
     const sent = await sendEmail({
       to: user.email,
-      subject: 'Redefinição de senha — Valeriote Cursos',
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-          <h2 style="color:#0b2233">Redefinição de senha</h2>
-          <p>Olá, ${user.name.split(' ')[0]}!</p>
-          <p>Recebemos um pedido para redefinir a senha da sua conta na plataforma de
-          aulas ao vivo da Valeriote Cursos.</p>
-          <p style="margin:28px 0">
-            <a href="${link}"
-               style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
-              Criar nova senha
-            </a>
-          </p>
-          <p style="color:#666;font-size:13px">O link vale por 1 hora. Se você não pediu
-          a redefinição, ignore este email — sua senha continua a mesma.</p>
-          <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
-        </div>
-      `,
+      subject: renderTemplate(template.subject, vars),
+      html: renderTemplate(template.body, vars),
     })
 
     if (!sent.ok) {

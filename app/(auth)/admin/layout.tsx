@@ -11,6 +11,7 @@ const menuItems = [
   { href: '/admin/cursos', label: 'Cursos', icon: '🎓' },
   { href: '/admin/lives', label: 'Transmissões', icon: '🎥' },
   { href: '/admin/avaliacoes', label: 'Avaliações', icon: '⭐' },
+  { href: '/admin/emails', label: 'Emails', icon: '✉️' },
 ]
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

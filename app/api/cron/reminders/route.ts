@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
+import { getTemplate, renderTemplate } from '@/lib/templates'
 
 // Lembretes automáticos: chamado a cada ~15min por um cron externo
 // (crontab da VPS OVH). Envia email 24h antes e 1h antes de cada dia.
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
 
   let sent = 0
   let failed = 0
+  const template = await getTemplate('lembrete')
 
   for (const live of upcoming) {
     const minutesToStart = (live.scheduledAt.getTime() - now) / 60000
@@ -58,26 +60,19 @@ export async function GET(req: NextRequest) {
       })
       if (already) continue
 
+      const vars = {
+        nome: user.name.split(' ')[0],
+        dia: live.title,
+        curso: live.course.title,
+        data: timeStr,
+        link: `${baseUrl}/aulas/live/${live.id}`,
+      }
       const res = await sendEmail({
         to: user.email,
         subject:
-          window.kind === 'H1'
-            ? `🔴 Começa em breve: ${live.title} — ${live.course.title}`
-            : `🗓 Amanhã: ${live.title} — ${live.course.title}`,
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
-            <h2 style="color:#0b2233">${live.title} começa ${window.label}!</h2>
-            <p>Olá, ${user.name.split(' ')[0]}!</p>
-            <p><b>${live.course.title}</b><br/>${timeStr}</p>
-            <p style="margin:28px 0">
-              <a href="${baseUrl}/aulas/live/${live.id}"
-                 style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
-                Entrar na transmissão
-              </a>
-            </p>
-            <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
-          </div>
-        `,
+          (window.kind === 'H1' ? '🔴 Começa em breve! ' : '') +
+          renderTemplate(template.subject, vars),
+        html: renderTemplate(template.body, vars),
       })
 
       if (res.ok) {

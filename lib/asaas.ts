@@ -128,7 +128,8 @@ export async function listConfirmedPayments(sinceDate: string): Promise<AsaasPay
     let offset = 0
     for (;;) {
       const page = await asaasFetch(
-        `/payments?status=${status}&dateCreated%5Bge%5D=${sinceDate}&limit=100&offset=${offset}`
+        // atenção: o filtro de data do Asaas é dateCreatedGe (dateCreated[ge] retorna 0)
+        `/payments?status=${status}&dateCreatedGe=${sinceDate}&limit=100&offset=${offset}`
       )
       out.push(...(page?.data || []))
       if (!page?.hasMore) break

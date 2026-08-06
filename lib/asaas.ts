@@ -45,6 +45,8 @@ export interface AsaasCustomer {
 }
 
 // Busca customer por CPF; se não existir, cria.
+// Telefone inválido não derruba a inscrição: tenta com ele e, se o Asaas
+// recusar (invalid_mobilePhone), cria o customer sem telefone.
 export async function findOrCreateCustomer(input: {
   name: string
   email: string
@@ -55,16 +57,30 @@ export async function findOrCreateCustomer(input: {
   const found = await asaasFetch(`/customers?cpfCnpj=${cpf}&limit=1`)
   if (found?.data?.length) return found.data[0]
 
-  return asaasFetch('/customers', {
-    method: 'POST',
-    body: JSON.stringify({
-      name: input.name,
-      email: input.email,
-      cpfCnpj: cpf,
-      mobilePhone: input.phone?.replace(/\D/g, '') || undefined,
-      notificationDisabled: false,
-    }),
-  })
+  const base = {
+    name: input.name,
+    email: input.email,
+    cpfCnpj: cpf,
+    notificationDisabled: false,
+  }
+  const phone = input.phone?.replace(/\D/g, '')
+
+  try {
+    return await asaasFetch('/customers', {
+      method: 'POST',
+      body: JSON.stringify({ ...base, mobilePhone: phone || undefined }),
+    })
+  } catch (error) {
+    if (
+      phone &&
+      error instanceof AsaasError &&
+      error.status === 400 &&
+      error.body.includes('mobilePhone')
+    ) {
+      return asaasFetch('/customers', { method: 'POST', body: JSON.stringify(base) })
+    }
+    throw error
+  }
 }
 
 export interface AsaasPayment {

@@ -1,6 +1,19 @@
 # Plano — Integração LP → Asaas → Academy
 
-> Documento de planejamento. Nada aqui foi implementado ainda.
+> **STATUS (06/08/2026): lado academy IMPLEMENTADO, testado ponta a ponta no sandbox e em produção.**
+> Diferenças em relação ao plano original:
+> - Envs com os nomes definidos pelo usuário: `INTERNAL_API_TOKEN` (header `x-internal-token`)
+>   no lugar de `LP_SHARED_SECRET`/`X-LP-Secret`; extras `ASAAS_ENV`, `ASAAS_BILLING_TYPE=UNDEFINED`
+>   (cliente escolhe PIX/boleto/cartão na página do Asaas), `ASAAS_DUE_DAYS=3`, `APP_URL`, `PAGE_URL`.
+> - `externalReference` leva o prefixo **`academy:`** — a conta Asaas é compartilhada com outro
+>   sistema (eDash) e o webhook é da conta inteira; eventos de cobranças alheias são ignorados.
+> - Descobertas do sandbox: telefone inválido derruba o `POST /customers` (`invalid_mobilePhone`)
+>   → retry sem telefone; o filtro de data da listagem é `dateCreatedGe` (`dateCreated[ge]` retorna 0).
+> - Campo extra `Registration.welcomeEmailAt` (controle de reenvio de e-mail pelo cron).
+> - Falta somente o lado da LP (formulário → POST /api/inscricoes) e a troca das envs pra produção.
+> Scripts de teste: `scripts/e2e-asaas.mjs`, `scripts/test-confirm-prefix.mjs`, `scripts/cleanup-e2e-asaas.mjs`.
+
+> Documento de planejamento original abaixo.
 > Contexto: lead se inscreve na LP (page.valecursoseconsultoria.com.br), paga via Asaas,
 > e recebe acesso automático à transmissão na academy (academy.valecursoseconsultoria.com.br).
 

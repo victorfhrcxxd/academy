@@ -88,6 +88,8 @@ export interface AsaasPayment {
   status: string
   invoiceUrl: string
   value: number
+  dueDate?: string
+  bankSlipUrl?: string
   externalReference?: string
 }
 
@@ -119,6 +121,23 @@ export async function createPayment(input: {
 
 export async function getPayment(paymentId: string): Promise<AsaasPayment> {
   return asaasFetch(`/payments/${paymentId}`)
+}
+
+// QR Code PIX da cobrança (checkout transparente na página de obrigado da LP).
+export interface AsaasPixQrCode {
+  encodedImage: string // PNG base64
+  payload: string // copia e cola
+  expirationDate?: string
+}
+export async function getPixQrCode(paymentId: string): Promise<AsaasPixQrCode> {
+  return asaasFetch(`/payments/${paymentId}/pixQrCode`)
+}
+
+// Linha digitável do boleto (idem).
+export async function getIdentificationField(
+  paymentId: string
+): Promise<{ identificationField: string }> {
+  return asaasFetch(`/payments/${paymentId}/identificationField`)
 }
 
 // Cobranças confirmadas a partir de uma data (YYYY-MM-DD) — usado pela reconciliação diária.

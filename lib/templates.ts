@@ -7,7 +7,7 @@ export const TEMPLATE_DEFAULTS: Record<
 > = {
   lembrete: {
     name: 'Lembrete de transmissão',
-    subject: '🗓 Lembrete: {{dia}} — {{curso}}',
+    subject: '🗓 Lembrete: {{dia}} | {{curso}}',
     body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
   <h2 style="color:#0b2233">{{dia}} do evento está chegando!</h2>
   <p>Olá, {{nome}}!</p>
@@ -23,7 +23,7 @@ export const TEMPLATE_DEFAULTS: Record<
   },
   'recuperar-senha': {
     name: 'Recuperação de senha',
-    subject: 'Redefinição de senha — Valeriote Cursos',
+    subject: 'Redefinição de senha | Valeriote Cursos',
     body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
   <h2 style="color:#0b2233">Redefinição de senha</h2>
   <p>Olá, {{nome}}!</p>
@@ -33,14 +33,14 @@ export const TEMPLATE_DEFAULTS: Record<
       Criar nova senha
     </a>
   </p>
-  <p style="color:#666;font-size:13px">O link vale por 1 hora. Se você não pediu a redefinição, ignore este email — sua senha continua a mesma.</p>
+  <p style="color:#666;font-size:13px">O link vale por 1 hora. Se você não pediu a redefinição, ignore este email: sua senha continua a mesma.</p>
   <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
 </div>`,
     variables: ['{{nome}}', '{{link}}'],
   },
   'boas-vindas': {
     name: 'Boas-vindas (inscrição online confirmada)',
-    subject: 'Inscrição confirmada — crie sua senha de acesso',
+    subject: 'Inscrição confirmada: crie sua senha de acesso',
     body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
   <h2 style="color:#0b2233">Inscrição confirmada!</h2>
   <p>Olá, {{nome}}!</p>
@@ -58,7 +58,7 @@ export const TEMPLATE_DEFAULTS: Record<
   },
   'acesso-liberado': {
     name: 'Acesso liberado (aluno que já tinha conta)',
-    subject: 'Acesso liberado — {{curso}}',
+    subject: 'Acesso liberado | {{curso}}',
     body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
   <h2 style="color:#0b2233">Acesso liberado!</h2>
   <p>Olá, {{nome}}!</p>
@@ -76,7 +76,7 @@ export const TEMPLATE_DEFAULTS: Record<
   },
   'inscricao-presencial-confirmada': {
     name: 'Inscrição presencial confirmada',
-    subject: 'Vaga garantida — {{curso}}',
+    subject: 'Vaga garantida | {{curso}}',
     body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
   <h2 style="color:#0b2233">Sua vaga está garantida!</h2>
   <p>Olá, {{nome}}!</p>
@@ -88,7 +88,7 @@ export const TEMPLATE_DEFAULTS: Record<
   },
   'acesso-revogado': {
     name: 'Acesso revogado (estorno/chargeback)',
-    subject: 'Acesso suspenso — {{curso}}',
+    subject: 'Acesso suspenso | {{curso}}',
     body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
   <h2 style="color:#0b2233">Acesso suspenso</h2>
   <p>Olá, {{nome}}!</p>

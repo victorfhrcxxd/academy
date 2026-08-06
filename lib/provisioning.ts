@@ -117,7 +117,6 @@ export async function confirmRegistration(registrationId: string): Promise<void>
   const email = reg.email.toLowerCase().trim()
   const existing = await prisma.user.findUnique({ where: { email } })
   let userId: string
-  let isNewUser = false
 
   if (existing) {
     userId = existing.id
@@ -125,13 +124,23 @@ export async function confirmRegistration(registrationId: string): Promise<void>
       await prisma.user.update({ where: { id: userId }, data: { status: 'ACTIVE' } })
     }
   } else {
-    isNewUser = true
-    // Senha aleatória inutilizável até o lead definir a dele pelo link
+    // Senha aleatória inutilizável até o lead definir a dele pelo link.
+    // O token de criar senha nasce JUNTO com o usuário: é a marca durável de
+    // "nunca definiu senha". Assim, reprocessamento do webhook (o evento
+    // gêmeo do PIX acha o usuário recém-criado e pensaria "já existia") e
+    // reenvio pelo cron continuam escolhendo o template certo (boas-vindas).
     const unusable = await hash(randomBytes(32).toString('hex'), 12)
     const created = await prisma.user.create({
       data: { name: reg.name, email, password: unusable, role: 'MEMBER', status: 'ACTIVE' },
     })
     userId = created.id
+    await prisma.passwordResetToken.create({
+      data: {
+        userId,
+        token: randomBytes(32).toString('hex'),
+        expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
+      },
+    })
   }
 
   await prisma.enrollment.upsert({
@@ -144,72 +153,79 @@ export async function confirmRegistration(registrationId: string): Promise<void>
     await prisma.registration.update({ where: { id: reg.id }, data: { userId } })
   }
 
-  if (!reg.welcomeEmailAt) await sendConfirmationEmail(reg.id, isNewUser)
+  if (!reg.welcomeEmailAt) await sendConfirmationEmail(reg.id)
 }
 
 // Envia o e-mail de confirmação da inscrição (também usado pelo cron pra reenviar).
-// Marca welcomeEmailAt só quando o envio dá certo.
-export async function sendConfirmationEmail(
-  registrationId: string,
-  isNewUserHint?: boolean
-): Promise<boolean> {
+// Trava atômica em welcomeEmailAt: no PIX, PAYMENT_CONFIRMED e PAYMENT_RECEIVED
+// chegam quase juntos e só um dos dois pode enviar; se o envio falhar, a trava
+// volta pra null e o cron de varredura reenvia.
+export async function sendConfirmationEmail(registrationId: string): Promise<boolean> {
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
     include: { course: { select: { title: true } } },
   })
   if (!reg || reg.status !== 'CONFIRMED') return false
 
-  const firstName = reg.name.split(' ')[0]
-  let templateKey: string
-  let vars: Record<string, string> = { nome: firstName, curso: reg.course.title }
+  const claimed = await prisma.registration.updateMany({
+    where: { id: reg.id, welcomeEmailAt: null },
+    data: { welcomeEmailAt: new Date() },
+  })
+  if (claimed.count === 0) return true // outro processo já enviou (ou está enviando)
 
-  if (reg.modality === 'PRESENCIAL') {
-    templateKey = 'inscricao-presencial-confirmada'
-  } else {
-    // ONLINE: usuário novo (ou que nunca definiu senha) recebe link de criar senha
-    const needsPassword =
-      isNewUserHint ??
-      (reg.userId
+  try {
+    const firstName = reg.name.split(' ')[0]
+    let templateKey: string
+    const vars: Record<string, string> = { nome: firstName, curso: reg.course.title }
+
+    if (reg.modality === 'PRESENCIAL') {
+      templateKey = 'inscricao-presencial-confirmada'
+    } else {
+      // ONLINE: token de senha em aberto = usuário que nunca definiu a própria
+      // senha (o token nasce com o usuário no provisionamento) → boas-vindas
+      // com link novo. Sem token em aberto → conta já em uso, acesso-liberado.
+      const needsPassword = reg.userId
         ? (await prisma.passwordResetToken.count({
             where: { userId: reg.userId, usedAt: null },
           })) > 0
-        : false)
+        : false
 
-    if (needsPassword && reg.userId) {
-      const token = randomBytes(32).toString('hex')
-      await prisma.$transaction([
-        prisma.passwordResetToken.deleteMany({ where: { userId: reg.userId, usedAt: null } }),
-        prisma.passwordResetToken.create({
-          data: {
-            userId: reg.userId,
-            token,
-            expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // 72h
-          },
-        }),
-      ])
-      templateKey = 'boas-vindas'
-      vars.link = `${appUrl()}/redefinir-senha/${token}`
-    } else {
-      templateKey = 'acesso-liberado'
-      vars.link = `${appUrl()}/login`
+      if (needsPassword && reg.userId) {
+        const token = randomBytes(32).toString('hex')
+        await prisma.$transaction([
+          prisma.passwordResetToken.deleteMany({ where: { userId: reg.userId, usedAt: null } }),
+          prisma.passwordResetToken.create({
+            data: {
+              userId: reg.userId,
+              token,
+              expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000), // 72h
+            },
+          }),
+        ])
+        templateKey = 'boas-vindas'
+        vars.link = `${appUrl()}/redefinir-senha/${token}`
+      } else {
+        templateKey = 'acesso-liberado'
+        vars.link = `${appUrl()}/login`
+      }
     }
-  }
 
-  const template = await getTemplate(templateKey)
-  const sent = await sendEmail({
-    to: reg.email,
-    subject: renderTemplate(template.subject, vars),
-    html: renderTemplate(template.body, vars),
-  })
-
-  if (sent.ok) {
-    await prisma.registration.update({
-      where: { id: reg.id },
-      data: { welcomeEmailAt: new Date() },
+    const template = await getTemplate(templateKey)
+    const sent = await sendEmail({
+      to: reg.email,
+      subject: renderTemplate(template.subject, vars),
+      html: renderTemplate(template.body, vars),
     })
-    return true
+    if (sent.ok) return true
+    console.error(`sendConfirmationEmail ${reg.id}: envio falhou —`, sent.error)
+  } catch (error) {
+    console.error(`sendConfirmationEmail ${reg.id}:`, error)
   }
-  console.error(`sendConfirmationEmail ${reg.id}: envio falhou —`, sent.error)
+
+  // O envio não aconteceu: devolve a trava pro cron reenviar depois
+  await prisma.registration
+    .update({ where: { id: reg.id }, data: { welcomeEmailAt: null } })
+    .catch(() => {})
   return false
 }
 

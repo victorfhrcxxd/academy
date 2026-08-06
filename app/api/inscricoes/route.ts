@@ -102,7 +102,8 @@ export async function POST(req: NextRequest) {
       customerId: customer.id,
       valueCents: course.priceCents,
       description: `Inscrição ${data.modality === 'ONLINE' ? 'online' : 'presencial'} — ${course.title}`,
-      externalReference: registration.id,
+      // prefixo "academy:" separa nossas cobranças de outros sistemas na mesma conta Asaas
+      externalReference: `academy:${registration.id}`,
       billingType: data.billingType,
     })
 

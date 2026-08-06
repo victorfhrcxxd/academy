@@ -30,13 +30,13 @@ export async function GET(req: NextRequest) {
 
   const divergences: string[] = []
   for (const payment of payments) {
-    // Cobranças sem externalReference não vieram deste sistema (ex.: criadas
-    // manualmente no painel) — ficam fora da reconciliação
-    if (!payment.externalReference) continue
+    // Só cobranças criadas por este sistema (prefixo "academy:") entram na
+    // reconciliação — a conta Asaas é compartilhada com outros sistemas
+    if (!payment.externalReference?.startsWith('academy:')) continue
 
     const registration =
       (await prisma.registration.findUnique({
-        where: { id: payment.externalReference },
+        where: { id: payment.externalReference.slice('academy:'.length) },
       })) ??
       (await prisma.registration.findUnique({ where: { asaasPaymentId: payment.id } }))
 

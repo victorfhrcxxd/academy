@@ -29,7 +29,7 @@ export async function processWebhookEvent(eventId: string): Promise<void> {
   try {
     const payload = event.payload as any
     const payment = payload?.payment
-    const externalReference: string | undefined = payment?.externalReference || undefined
+    const rawRef: string | undefined = payment?.externalReference || undefined
     const paymentId: string | undefined = payment?.id || event.paymentId || undefined
 
     const isConfirm = CONFIRM_EVENTS.includes(event.type)
@@ -40,6 +40,14 @@ export async function processWebhookEvent(eventId: string): Promise<void> {
       await markProcessed(eventId)
       return
     }
+
+    // A conta Asaas é compartilhada com outros sistemas (ex.: eDash) e o webhook
+    // é da conta inteira: cobrança com externalReference de outro sistema não é nossa
+    if (rawRef && !rawRef.startsWith('academy:')) {
+      await markProcessed(eventId)
+      return
+    }
+    const externalReference = rawRef?.slice('academy:'.length)
 
     // Localiza a inscrição: externalReference (= Registration.id), senão pelo paymentId
     const registration =

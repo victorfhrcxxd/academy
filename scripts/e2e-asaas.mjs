@@ -177,7 +177,7 @@ r = await fetch(`${BASE}/api/webhooks/asaas`, {
   body: JSON.stringify({
     id: `evt_teste_refund_${Date.now()}`,
     event: 'PAYMENT_REFUNDED',
-    payment: { id: reg.asaasPaymentId, externalReference: created.registrationId },
+    payment: { id: reg.asaasPaymentId, externalReference: `academy:${created.registrationId}` },
   }),
 })
 log('webhook PAYMENT_REFUNDED →', r.status)

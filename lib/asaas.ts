@@ -140,6 +140,39 @@ export async function getIdentificationField(
   return asaasFetch(`/payments/${paymentId}/identificationField`)
 }
 
+// Paga a cobrança com cartão de crédito (checkout transparente do modal da LP).
+// Os dados do cartão só transitam: nada é gravado em banco nem em log.
+export async function payWithCreditCard(
+  paymentId: string,
+  input: {
+    creditCard: {
+      holderName: string
+      number: string
+      expiryMonth: string
+      expiryYear: string
+      ccv: string
+    }
+    holderInfo: {
+      name: string
+      email: string
+      cpfCnpj: string
+      postalCode: string
+      addressNumber: string
+      phone?: string
+    }
+    remoteIp?: string
+  }
+): Promise<AsaasPayment> {
+  return asaasFetch(`/payments/${paymentId}/payWithCreditCard`, {
+    method: 'POST',
+    body: JSON.stringify({
+      creditCard: input.creditCard,
+      creditCardHolderInfo: input.holderInfo,
+      remoteIp: input.remoteIp,
+    }),
+  })
+}
+
 // Cobranças confirmadas a partir de uma data (YYYY-MM-DD) — usado pela reconciliação diária.
 export async function listConfirmedPayments(sinceDate: string): Promise<AsaasPayment[]> {
   const out: AsaasPayment[] = []

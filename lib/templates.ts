@@ -38,6 +38,66 @@ export const TEMPLATE_DEFAULTS: Record<
 </div>`,
     variables: ['{{nome}}', '{{link}}'],
   },
+  'boas-vindas': {
+    name: 'Boas-vindas (inscrição online confirmada)',
+    subject: 'Inscrição confirmada — crie sua senha de acesso',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Inscrição confirmada!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Seu pagamento foi confirmado e seu acesso às transmissões de <b>{{curso}}</b> já está liberado.</p>
+  <p>Clique no botão abaixo para criar sua senha e entrar na plataforma:</p>
+  <p style="margin:28px 0">
+    <a href="{{link}}" style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
+      Criar minha senha
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px">O link vale por 72 horas. Depois disso, use a opção "Esqueci minha senha" na tela de login.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}', '{{link}}'],
+  },
+  'acesso-liberado': {
+    name: 'Acesso liberado (aluno que já tinha conta)',
+    subject: 'Acesso liberado — {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Acesso liberado!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Seu pagamento foi confirmado e o acesso às transmissões de <b>{{curso}}</b> foi liberado na sua conta.</p>
+  <p>Entre com seu login de sempre:</p>
+  <p style="margin:28px 0">
+    <a href="{{link}}" style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
+      Acessar a plataforma
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px">Esqueceu a senha? Use a opção "Esqueci minha senha" na tela de login.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}', '{{link}}'],
+  },
+  'inscricao-presencial-confirmada': {
+    name: 'Inscrição presencial confirmada',
+    subject: 'Vaga garantida — {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Sua vaga está garantida!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Seu pagamento foi confirmado e sua inscrição presencial em <b>{{curso}}</b> está garantida.</p>
+  <p>Em breve você receberá mais informações sobre o evento por e-mail.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}'],
+  },
+  'acesso-revogado': {
+    name: 'Acesso revogado (estorno/chargeback)',
+    subject: 'Acesso suspenso — {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Acesso suspenso</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Identificamos o estorno do pagamento da sua inscrição em <b>{{curso}}</b> e, por isso, o acesso às transmissões foi suspenso.</p>
+  <p>Se acredita que houve um engano, fale com a nossa equipe respondendo este e-mail.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}'],
+  },
 }
 
 // Busca o template (customização do banco, senão o padrão)

@@ -30,6 +30,7 @@ model User {
   resetTokens   PasswordResetToken[]
   questions     Question[]
   questionVotes QuestionVote[]
+  registrations Registration[]
 
   @@index([role])
   @@index([status])
@@ -55,11 +56,14 @@ model Course {
   title       String
   description String?
   status      String   @default("ACTIVE") // ACTIVE | ARCHIVED
+  priceCents       Int? // preço da inscrição em centavos (nulo = inscrição indisponível)
+  registrationOpen Boolean @default(false) // liga/desliga inscrições via LP/Asaas
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  lives       Live[]
-  enrollments Enrollment[]
+  lives         Live[]
+  enrollments   Enrollment[]
+  registrations Registration[]
 
   @@index([status])
 }
@@ -218,11 +222,12 @@ model ChatMessage {
   @@index([liveId, createdAt])
 }
 
-// Vínculo aluno ↔ curso (matrícula feita manualmente pelo admin)
+// Vínculo aluno ↔ curso (matrícula manual do admin ou automática via Asaas)
 model Enrollment {
   id        String   @id @default(cuid())
   userId    String
   courseId  String
+  source    String   @default("MANUAL") // MANUAL (admin) | ASAAS (webhook de pagamento)
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -230,4 +235,47 @@ model Enrollment {
 
   @@unique([userId, courseId])
   @@index([courseId])
+}
+
+// Inscrição vinda da LP (presencial e online) — cobrada via Asaas.
+// modality: PRESENCIAL | ONLINE
+// status: PENDING | CONFIRMED | REFUNDED | CHARGEBACK | CANCELLED
+model Registration {
+  id              String    @id @default(cuid())
+  courseId        String
+  modality        String
+  name            String
+  email           String // identificador que amarra LP ↔ Asaas ↔ academy
+  cpf             String
+  phone           String?
+  asaasCustomerId String?
+  asaasPaymentId  String?   @unique // 1 cobrança = 1 inscrição
+  status          String    @default("PENDING")
+  paymentUrl      String? // invoiceUrl do Asaas devolvido pro lead
+  userId          String? // nulo até o provisionamento (e sempre nulo no presencial)
+  origin          Json? // UTM/rastreamento vindo da LP
+  welcomeEmailAt  DateTime? // e-mail de confirmação/boas-vindas enviado
+  confirmedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([courseId, status])
+}
+
+// Evento de webhook do Asaas — id do próprio Asaas = chave da idempotência.
+// processedAt nulo = pendente (o cron de varredura reprocessa)
+model WebhookEvent {
+  id          String    @id
+  type        String // PAYMENT_CONFIRMED, PAYMENT_RECEIVED, ...
+  paymentId   String?
+  payload     Json // corpo bruto, para reprocessamento/auditoria
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([processedAt])
 }

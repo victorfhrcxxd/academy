@@ -15,6 +15,8 @@ export default async function AdminCoursesPage() {
     title: c.title,
     description: c.description,
     status: c.status,
+    priceCents: c.priceCents,
+    registrationOpen: c.registrationOpen,
     students: c._count.enrollments,
     lives: c._count.lives,
   }))

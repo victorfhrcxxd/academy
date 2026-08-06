@@ -11,6 +11,7 @@ const menuItems = [
   { href: '/admin/membros', label: 'Alunos', icon: 'users' },
   { href: '/admin/cursos', label: 'Cursos', icon: 'book-open' },
   { href: '/admin/lives', label: 'Transmissões', icon: 'video' },
+  { href: '/admin/inscricoes', label: 'Inscrições', icon: 'credit-card' },
   { href: '/admin/avaliacoes', label: 'Avaliações', icon: 'star' },
   { href: '/admin/emails', label: 'Emails', icon: 'mail' },
 ]

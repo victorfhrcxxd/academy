@@ -15,6 +15,13 @@ export type MemberInput = z.infer<typeof memberSchema>
 export const courseSchema = z.object({
   title: z.string().min(3, 'Título deve ter no mínimo 3 caracteres').max(150),
   description: z.string().max(2000).optional(),
+  priceCents: z
+    .number()
+    .int()
+    .positive('Preço deve ser maior que zero')
+    .nullable()
+    .optional(),
+  registrationOpen: z.boolean().optional(),
 })
 
 export type CourseInput = z.infer<typeof courseSchema>

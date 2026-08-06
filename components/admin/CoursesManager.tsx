@@ -13,15 +13,22 @@ interface Course {
   title: string
   description: string | null
   status: string
+  priceCents: number | null
+  registrationOpen: boolean
   students: number
   lives: number
 }
+
+const formatPrice = (cents: number) =>
+  (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 export default function CoursesManager({ courses }: { courses: Course[] }) {
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Course | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [price, setPrice] = useState('') // em reais, ex.: "497,00"
+  const [registrationOpen, setRegistrationOpen] = useState(false)
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -34,6 +41,8 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
     setEditing(null)
     setTitle('')
     setDescription('')
+    setPrice('')
+    setRegistrationOpen(false)
     setShowForm(true)
   }
 
@@ -41,13 +50,31 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
     setEditing(c)
     setTitle(c.title)
     setDescription(c.description || '')
+    setPrice(c.priceCents != null ? (c.priceCents / 100).toFixed(2).replace('.', ',') : '')
+    setRegistrationOpen(c.registrationOpen)
     setShowForm(true)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const priceCents = price.trim()
+      ? Math.round(Number(price.replace(/\./g, '').replace(',', '.')) * 100)
+      : null
+    if (price.trim() && (!Number.isFinite(priceCents) || priceCents! <= 0)) {
+      notify(false, 'Preço inválido')
+      return
+    }
+    if (registrationOpen && priceCents == null) {
+      notify(false, 'Defina o preço para abrir as inscrições')
+      return
+    }
     startTransition(async () => {
-      const payload = { title, description: description || undefined }
+      const payload = {
+        title,
+        description: description || undefined,
+        priceCents,
+        registrationOpen,
+      }
       const res = editing
         ? await updateCourse(editing.id, payload)
         : await createCourse(payload)
@@ -136,6 +163,29 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
           </div>
+          <div className="flex flex-wrap items-end gap-6">
+            <div>
+              <label className="block text-sm font-medium text-navy-950 mb-1.5">
+                Preço da inscrição (R$)
+              </label>
+              <input
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                inputMode="decimal"
+                className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="Ex.: 497,00"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm font-medium text-navy-950 pb-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={registrationOpen}
+                onChange={(e) => setRegistrationOpen(e.target.checked)}
+                className="h-4 w-4 accent-gold-500"
+              />
+              Inscrições abertas (LP / pagamento Asaas)
+            </label>
+          </div>
           <div className="flex gap-3">
             <button
               type="submit"
@@ -179,6 +229,12 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
             <p className="text-sm text-gray-600 mb-4">
               {c.students} aluno{c.students === 1 ? '' : 's'} · {c.lives} dia
               {c.lives === 1 ? '' : 's'} de transmissão
+              {c.priceCents != null && <> · {formatPrice(c.priceCents)}</>}
+              {c.registrationOpen && (
+                <span className="ml-2 rounded-full bg-gold-100 text-gold-700 px-2 py-0.5 text-xs font-bold">
+                  Inscrições abertas
+                </span>
+              )}
             </p>
             <div className="flex gap-2 text-xs font-medium">
               <button

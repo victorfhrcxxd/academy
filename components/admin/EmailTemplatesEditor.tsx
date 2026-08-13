@@ -127,8 +127,9 @@ export default function EmailTemplatesEditor({
       <div className="rounded-2xl bg-white border border-gray-200 p-6 mb-6">
         <p className="text-sm font-bold text-navy-950 mb-1">Cabeçalho dos emails</p>
         <p className="text-xs text-gray-500 mb-4">
-          Faixa com a logo no topo de todos os emails. Aceita cor em hexadecimal e logo por
-          URL completa (https://...) ou caminho do site (/brand/...).
+          Imagem exibida como o cabeçalho inteiro, em largura total (ideal 600×180), no topo
+          de todos os emails. Aceita URL completa (https://...) ou caminho do site
+          (/brand/...); sem imagem, entra a faixa na cor escolhida com a logo Valeriote.
         </p>
         <div className="flex flex-wrap items-end gap-4">
           <div>
@@ -150,11 +151,13 @@ export default function EmailTemplatesEditor({
             </div>
           </div>
           <div className="flex-1 min-w-56">
-            <label className="block text-sm font-medium text-navy-950 mb-1.5">Logo</label>
+            <label className="block text-sm font-medium text-navy-950 mb-1.5">
+              Imagem do cabeçalho
+            </label>
             <input
               value={headerLogo}
               onChange={(e) => setHeaderLogo(e.target.value)}
-              placeholder={LOGO_PADRAO}
+              placeholder="Vazio = faixa na cor com a logo Valeriote"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
             />
           </div>
@@ -170,8 +173,8 @@ export default function EmailTemplatesEditor({
         {/* upload da logo direto do computador (salva sozinho, como no pagevale) */}
         <div className="mt-4 border-t border-gray-200 pt-4">
           <p className="text-xs text-gray-500 mb-2">
-            Ou envie a logo direto do computador (JPG, PNG ou WebP até 3 MB; ideal com
-            fundo transparente e ~40px de altura de conteúdo). Substitui o campo acima.
+            Ou envie a imagem do cabeçalho direto do computador (JPG, PNG ou WebP até 3 MB;
+            ideal 600×180). Substitui o campo acima.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <input
@@ -299,14 +302,17 @@ export default function EmailTemplatesEditor({
                 <b className="text-navy-950">{previewSubject}</b>
               </p>
               <div className="rounded-xl border border-gray-200 overflow-hidden">
-                <div className="py-5 text-center" style={{ backgroundColor: previewBg }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={previewLogo}
-                    alt="Logo do cabeçalho"
-                    className="inline-block h-10 w-auto"
-                  />
-                </div>
+                {headerLogo.trim() ? (
+                  <div style={{ backgroundColor: previewBg }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={previewLogo} alt="Cabeçalho do email" className="block w-full h-auto" />
+                  </div>
+                ) : (
+                  <div className="py-5 text-center" style={{ backgroundColor: previewBg }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={LOGO_PADRAO} alt="Logo Valeriote" className="inline-block h-10 w-auto" />
+                  </div>
+                )}
                 <div className="p-2 overflow-auto" dangerouslySetInnerHTML={{ __html: previewHtml }} />
               </div>
             </div>

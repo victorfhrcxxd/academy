@@ -127,14 +127,22 @@ function logoAbs(logo: string | null): string {
   return /^https?:\/\//.test(l) ? l : `${baseUrl()}${l.startsWith('/') ? '' : '/'}${l}`
 }
 
-// Moldura dos emails: cartão branco com cabeçalho (cor + logo) e rodapé
-// institucional. O corpo do template entra dentro do cartão.
+// Moldura dos emails: cartão branco com cabeçalho e rodapé institucional.
+// Imagem configurada pelo admin = cabeçalho INTEIRO (banner em largura total,
+// como no pagevale); sem imagem, faixa na cor com a logo Valeriote padrão.
 export function emailShell(inner: string, cfg?: EmailHeaderCfg): string {
   const bg =
     cfg?.headerBg && /^#[0-9a-fA-F]{3,8}$/.test(cfg.headerBg.trim())
       ? cfg.headerBg.trim()
       : HEADER_BG_PADRAO
-  const logo = logoAbs(cfg?.headerLogo ?? null)
+  const custom = (cfg?.headerLogo ?? '').trim()
+  const header = custom
+    ? `<tr><td style="background-color:${bg};border-top-left-radius:20px;border-top-right-radius:20px">
+        <img src="${logoAbs(custom)}" alt="Valeriote Cursos e Consultoria" width="600" style="width:100%;max-width:600px;height:auto;display:block;border-top-left-radius:20px;border-top-right-radius:20px">
+      </td></tr>`
+    : `<tr><td style="background-color:${bg};padding:26px 10%;text-align:center;border-top-left-radius:20px;border-top-right-radius:20px">
+        <img src="${logoAbs(null)}" alt="Valeriote Cursos e Consultoria" height="40" style="height:40px;width:auto;display:inline-block">
+      </td></tr>`
   return `<!doctype html>
 <html lang="pt-BR"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head>
 <body style="background-color:#f4f5f6;font-family:Helvetica,Arial,sans-serif;margin:0;padding:0">
@@ -143,9 +151,7 @@ export function emailShell(inner: string, cfg?: EmailHeaderCfg): string {
       <td style="display:block;margin:0 auto;max-width:600px;padding:0;width:100%">
         <div style="box-sizing:border-box;display:block;margin:0 auto;max-width:600px;padding:0 12px 3rem">
           <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="background-color:#fff;width:100%;border-radius:20px;overflow:hidden;margin-top:50px">
-            <tr><td style="background-color:${bg};padding:26px 10%;text-align:center;border-top-left-radius:20px;border-top-right-radius:20px">
-              <img src="${logo}" alt="Valeriote Cursos e Consultoria" height="40" style="height:40px;width:auto;display:inline-block">
-            </td></tr>
+            ${header}
             <tr><td style="padding:6% 8%">${inner}</td></tr>
           </table>
           <div style="clear:both;padding-top:24px;text-align:center">

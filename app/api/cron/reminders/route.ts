@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
-import { getTemplate, renderTemplate } from '@/lib/templates'
+import { emailShell, getEmailSettings, getTemplate, renderTemplate } from '@/lib/templates'
 
 // Lembretes automáticos: chamado a cada ~15min por um cron externo
 // (crontab da VPS OVH). Envia email 24h antes e 1h antes de cada dia.
@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
   let sent = 0
   let failed = 0
   const template = await getTemplate('lembrete')
+  const emailCfg = await getEmailSettings()
 
   for (const live of upcoming) {
     const minutesToStart = (live.scheduledAt.getTime() - now) / 60000
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
         subject:
           (window.kind === 'H1' ? '🔴 Começa em breve! ' : '') +
           renderTemplate(template.subject, vars),
-        html: renderTemplate(template.body, vars),
+        html: emailShell(renderTemplate(template.body, vars), emailCfg),
       })
 
       if (res.ok) {

@@ -5,6 +5,7 @@ import {
   updateTemplate,
   restoreTemplateDefault,
   sendTemplateTest,
+  updateEmailSettings,
 } from '@/server/actions/template-actions'
 
 interface Template {
@@ -16,7 +17,21 @@ interface Template {
   customized: boolean
 }
 
-export default function EmailTemplatesEditor({ templates }: { templates: Template[] }) {
+interface HeaderSettings {
+  headerBg: string | null
+  headerLogo: string | null
+}
+
+const HEADER_BG_PADRAO = '#0b2233'
+const LOGO_PADRAO = '/brand/valeriote-logo.png'
+
+export default function EmailTemplatesEditor({
+  templates,
+  settings,
+}: {
+  templates: Template[]
+  settings: HeaderSettings
+}) {
   const [selected, setSelected] = useState(templates[0]?.key || '')
   const [drafts, setDrafts] = useState<Record<string, { subject: string; body: string }>>(
     Object.fromEntries(templates.map((t) => [t.key, { subject: t.subject, body: t.body }]))
@@ -24,6 +39,8 @@ export default function EmailTemplatesEditor({ templates }: { templates: Templat
   const [showPreview, setShowPreview] = useState(true)
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [headerBg, setHeaderBg] = useState(settings.headerBg ?? '')
+  const [headerLogo, setHeaderLogo] = useState(settings.headerLogo ?? '')
 
   const current = templates.find((t) => t.key === selected)
   const draft = drafts[selected]
@@ -55,6 +72,16 @@ export default function EmailTemplatesEditor({ templates }: { templates: Templat
       notify(res.success, res.success ? res.message || 'Teste enviado' : res.error || 'Erro')
     })
 
+  const saveHeader = () =>
+    startTransition(async () => {
+      const res = await updateEmailSettings(headerBg, headerLogo)
+      notify(res.success, res.success ? 'Cabeçalho salvo! Vale para todos os emails.' : res.error || 'Erro')
+    })
+
+  // valores efetivos do cabeçalho (rascunho atual, senão o padrão)
+  const previewBg = /^#[0-9a-fA-F]{3,8}$/.test(headerBg.trim()) ? headerBg.trim() : HEADER_BG_PADRAO
+  const previewLogo = headerLogo.trim() || LOGO_PADRAO
+
   // preview com dados de exemplo
   const sample: Record<string, string> = {
     nome: 'Maria',
@@ -77,6 +104,51 @@ export default function EmailTemplatesEditor({ templates }: { templates: Templat
         Edite os textos dos emails que a plataforma envia. Use as variáveis pra
         personalizar — elas são trocadas pelos dados reais na hora do envio.
       </p>
+
+      {/* Cabeçalho global: cor + logo, aplicados em todos os emails */}
+      <div className="rounded-2xl bg-white border border-gray-200 p-6 mb-6">
+        <p className="text-sm font-bold text-navy-950 mb-1">Cabeçalho dos emails</p>
+        <p className="text-xs text-gray-500 mb-4">
+          Faixa com a logo no topo de todos os emails. Aceita cor em hexadecimal e logo por
+          URL completa (https://...) ou caminho do site (/brand/...).
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label className="block text-sm font-medium text-navy-950 mb-1.5">Cor de fundo</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={previewBg}
+                onChange={(e) => setHeaderBg(e.target.value)}
+                className="h-9 w-12 cursor-pointer rounded border border-gray-300 p-0.5"
+                aria-label="Selecionar cor de fundo do cabeçalho"
+              />
+              <input
+                value={headerBg}
+                onChange={(e) => setHeaderBg(e.target.value)}
+                placeholder={HEADER_BG_PADRAO}
+                className="w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+              />
+            </div>
+          </div>
+          <div className="flex-1 min-w-56">
+            <label className="block text-sm font-medium text-navy-950 mb-1.5">Logo</label>
+            <input
+              value={headerLogo}
+              onChange={(e) => setHeaderLogo(e.target.value)}
+              placeholder={LOGO_PADRAO}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+          <button
+            onClick={saveHeader}
+            disabled={isPending}
+            className="rounded-lg bg-navy-950 hover:bg-navy-900 px-5 py-2.5 text-sm font-bold text-white transition disabled:opacity-60"
+          >
+            {isPending ? 'Salvando...' : 'Salvar cabeçalho'}
+          </button>
+        </div>
+      </div>
 
       <div className="flex gap-2 mb-6">
         {templates.map((t) => (
@@ -185,10 +257,17 @@ export default function EmailTemplatesEditor({ templates }: { templates: Templat
                 <span className="text-gray-400">Assunto:</span>{' '}
                 <b className="text-navy-950">{previewSubject}</b>
               </p>
-              <div
-                className="rounded-xl border border-gray-200 p-2 overflow-auto"
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
-              />
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                <div className="py-5 text-center" style={{ backgroundColor: previewBg }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewLogo}
+                    alt="Logo do cabeçalho"
+                    className="inline-block h-10 w-auto"
+                  />
+                </div>
+                <div className="p-2 overflow-auto" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+              </div>
             </div>
           )}
         </div>

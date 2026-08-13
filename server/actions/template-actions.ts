@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
-import { TEMPLATE_DEFAULTS, renderTemplate } from '@/lib/templates'
+import { TEMPLATE_DEFAULTS, emailShell, getEmailSettings, renderTemplate } from '@/lib/templates'
 import { requireAdmin } from './admin-guard'
 import type { ActionResponse } from '@/types'
 
@@ -43,6 +43,36 @@ export async function updateTemplate(
   }
 }
 
+// Cabeçalho global dos emails (cor de fundo + logo), como no painel do pagevale
+export async function updateEmailSettings(
+  headerBg: string,
+  headerLogo: string
+): Promise<ActionResponse> {
+  try {
+    await requireAdmin()
+    const bg = headerBg.trim()
+    const logo = headerLogo.trim()
+    if (bg && !/^#[0-9a-fA-F]{3,8}$/.test(bg)) {
+      return { success: false, error: 'Cor inválida: use o formato #0b2233' }
+    }
+    if (logo && !/^(https?:\/\/|\/)/.test(logo)) {
+      return { success: false, error: 'Logo inválida: use URL completa (https://...) ou caminho do site (/brand/...)' }
+    }
+
+    await prisma.emailSettings.upsert({
+      where: { id: 1 },
+      update: { headerBg: bg || null, headerLogo: logo || null },
+      create: { id: 1, headerBg: bg || null, headerLogo: logo || null },
+    })
+
+    revalidatePath('/admin/emails')
+    return { success: true, message: 'Cabeçalho salvo' }
+  } catch (error) {
+    console.error('updateEmailSettings:', error)
+    return { success: false, error: 'Erro ao salvar cabeçalho' }
+  }
+}
+
 export async function restoreTemplateDefault(key: string): Promise<ActionResponse> {
   try {
     await requireAdmin()
@@ -70,10 +100,11 @@ export async function sendTemplateTest(
       return { success: false, error: 'Não autorizado' }
     }
 
+    const cfg = await getEmailSettings()
     const res = await sendEmail({
       to: session.user.email,
       subject: renderTemplate(subject, SAMPLE_VARS),
-      html: renderTemplate(body, SAMPLE_VARS),
+      html: emailShell(renderTemplate(body, SAMPLE_VARS), cfg),
     })
 
     return res.ok

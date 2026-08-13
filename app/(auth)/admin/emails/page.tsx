@@ -1,12 +1,12 @@
 import { prisma } from '@/lib/db'
-import { TEMPLATE_DEFAULTS } from '@/lib/templates'
+import { TEMPLATE_DEFAULTS, getEmailSettings } from '@/lib/templates'
 import EmailTemplatesEditor from '@/components/admin/EmailTemplatesEditor'
 
 export const metadata = { title: 'Emails — Admin Valeriote' }
 export const dynamic = 'force-dynamic'
 
 export default async function AdminEmailsPage() {
-  const custom = await prisma.emailTemplate.findMany()
+  const [custom, settings] = await Promise.all([prisma.emailTemplate.findMany(), getEmailSettings()])
   const customByKey = new Map(custom.map((t) => [t.key, t]))
 
   const templates = Object.entries(TEMPLATE_DEFAULTS).map(([key, def]) => {
@@ -21,5 +21,5 @@ export default async function AdminEmailsPage() {
     }
   })
 
-  return <EmailTemplatesEditor templates={templates} />
+  return <EmailTemplatesEditor templates={templates} settings={settings} />
 }

@@ -5,7 +5,7 @@ import { randomBytes } from 'crypto'
 import { hash } from 'bcryptjs'
 import { prisma } from './db'
 import { sendEmail } from './email'
-import { getTemplate, renderTemplate } from './templates'
+import { montarEmail } from './templates'
 
 // Eventos que liberam acesso — os dois, de forma idempotente (no boleto o
 // RECEIVED pode chegar dias depois do CONFIRMED; o primeiro que chegar libera)
@@ -210,11 +210,11 @@ export async function sendConfirmationEmail(registrationId: string): Promise<boo
       }
     }
 
-    const template = await getTemplate(templateKey)
+    const email = await montarEmail(templateKey, vars)
     const sent = await sendEmail({
       to: reg.email,
-      subject: renderTemplate(template.subject, vars),
-      html: renderTemplate(template.body, vars),
+      subject: email.subject,
+      html: email.html,
     })
     if (sent.ok) return true
     console.error(`sendConfirmationEmail ${reg.id}: envio falhou —`, sent.error)
@@ -247,13 +247,11 @@ async function revokeRegistration(registrationId: string, newStatus: string): Pr
     })
     // Matrículas MANUAL (dadas pelo admin) nunca são tocadas
     if (removed.count > 0) {
-      const template = await getTemplate('acesso-revogado')
-      const vars = { nome: reg.name.split(' ')[0], curso: reg.course.title }
-      await sendEmail({
-        to: reg.email,
-        subject: renderTemplate(template.subject, vars),
-        html: renderTemplate(template.body, vars),
-      }).catch(() => {})
+      const email = await montarEmail('acesso-revogado', {
+        nome: reg.name.split(' ')[0],
+        curso: reg.course.title,
+      })
+      await sendEmail({ to: reg.email, subject: email.subject, html: email.html }).catch(() => {})
     }
   }
 }

@@ -127,6 +127,14 @@ model QuestionVote {
   @@unique([questionId, userId])
 }
 
+// Aparência global dos emails (cabeçalho com cor e logo) — linha única id=1
+model EmailSettings {
+  id         Int      @id @default(1)
+  headerBg   String?
+  headerLogo String?
+  updatedAt  DateTime @updatedAt
+}
+
 // Template de email editável pelo admin (variáveis {{assim}})
 model EmailTemplate {
   key       String   @id // lembrete | recuperar-senha

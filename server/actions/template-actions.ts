@@ -2,6 +2,7 @@
 
 import { getServerSession } from 'next-auth'
 import { revalidatePath } from 'next/cache'
+import { del, put } from '@vercel/blob'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { sendEmail } from '@/lib/email'
@@ -70,6 +71,56 @@ export async function updateEmailSettings(
   } catch (error) {
     console.error('updateEmailSettings:', error)
     return { success: false, error: 'Erro ao salvar cabeçalho' }
+  }
+}
+
+// Upload da logo do cabeçalho (Vercel Blob), como o banner de email do pagevale
+export async function uploadEmailHeaderLogo(
+  formData: FormData
+): Promise<ActionResponse & { url?: string }> {
+  try {
+    await requireAdmin()
+    const file = formData.get('logo')
+    if (!(file instanceof File) || file.size === 0) {
+      return { success: false, error: 'Selecione uma imagem' }
+    }
+    const TIPOS: Record<string, string> = {
+      'image/png': 'png',
+      'image/jpeg': 'jpg',
+      'image/webp': 'webp',
+    }
+    const ext = TIPOS[file.type]
+    if (!ext) return { success: false, error: 'Formato inválido: use JPG, PNG ou WebP' }
+    if (file.size > 3 * 1024 * 1024) {
+      return { success: false, error: 'Imagem grande demais (máximo 3 MB)' }
+    }
+
+    const blob = await put(`email-header/logo-${Date.now()}.${ext}`, file, {
+      access: 'public',
+      contentType: file.type,
+    })
+
+    // Logo anterior enviada por upload: limpa do storage para não acumular
+    const atual = await prisma.emailSettings.findUnique({ where: { id: 1 } })
+    const anterior = atual?.headerLogo
+    await prisma.emailSettings.upsert({
+      where: { id: 1 },
+      update: { headerLogo: blob.url },
+      create: { id: 1, headerLogo: blob.url },
+    })
+    if (anterior && anterior !== blob.url && anterior.includes('.blob.vercel-storage.com')) {
+      try {
+        await del(anterior)
+      } catch {
+        /* arquivo já removido */
+      }
+    }
+
+    revalidatePath('/admin/emails')
+    return { success: true, message: 'Logo enviada', url: blob.url }
+  } catch (error) {
+    console.error('uploadEmailHeaderLogo:', error)
+    return { success: false, error: 'Erro ao enviar a logo' }
   }
 }
 

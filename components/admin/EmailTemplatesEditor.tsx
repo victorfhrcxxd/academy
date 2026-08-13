@@ -6,6 +6,7 @@ import {
   restoreTemplateDefault,
   sendTemplateTest,
   updateEmailSettings,
+  uploadEmailHeaderLogo,
 } from '@/server/actions/template-actions'
 
 interface Template {
@@ -41,6 +42,7 @@ export default function EmailTemplatesEditor({
   const [isPending, startTransition] = useTransition()
   const [headerBg, setHeaderBg] = useState(settings.headerBg ?? '')
   const [headerLogo, setHeaderLogo] = useState(settings.headerLogo ?? '')
+  const [logoFile, setLogoFile] = useState<File | null>(null)
 
   const current = templates.find((t) => t.key === selected)
   const draft = drafts[selected]
@@ -76,6 +78,22 @@ export default function EmailTemplatesEditor({
     startTransition(async () => {
       const res = await updateEmailSettings(headerBg, headerLogo)
       notify(res.success, res.success ? 'Cabeçalho salvo! Vale para todos os emails.' : res.error || 'Erro')
+    })
+
+  const uploadLogo = () =>
+    startTransition(async () => {
+      if (!logoFile) {
+        notify(false, 'Selecione uma imagem primeiro')
+        return
+      }
+      const fd = new FormData()
+      fd.append('logo', logoFile)
+      const res = await uploadEmailHeaderLogo(fd)
+      if (res.success && res.url) {
+        setHeaderLogo(res.url)
+        setLogoFile(null)
+      }
+      notify(res.success, res.success ? 'Logo enviada e salva!' : res.error || 'Erro')
     })
 
   // valores efetivos do cabeçalho (rascunho atual, senão o padrão)
@@ -147,6 +165,29 @@ export default function EmailTemplatesEditor({
           >
             {isPending ? 'Salvando...' : 'Salvar cabeçalho'}
           </button>
+        </div>
+
+        {/* upload da logo direto do computador (salva sozinho, como no pagevale) */}
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <p className="text-xs text-gray-500 mb-2">
+            Ou envie a logo direto do computador (JPG, PNG ou WebP até 3 MB; ideal com
+            fundo transparente e ~40px de altura de conteúdo). Substitui o campo acima.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+              className="flex-1 min-w-56 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-navy-950 hover:file:bg-gray-200"
+            />
+            <button
+              onClick={uploadLogo}
+              disabled={isPending || !logoFile}
+              className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-bold text-navy-950 transition hover:bg-gray-50 disabled:opacity-60"
+            >
+              {isPending ? 'Enviando...' : 'Enviar imagem'}
+            </button>
+          </div>
         </div>
       </div>
 

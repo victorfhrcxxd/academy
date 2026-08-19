@@ -8,6 +8,7 @@ export const memberSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
   courseIds: z.array(z.string()).default([]),
+  role: z.enum(['MEMBER', 'ADMIN']).default('MEMBER'),
 })
 
 export type MemberInput = z.infer<typeof memberSchema>

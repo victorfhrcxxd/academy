@@ -8,10 +8,12 @@
   --color-navy-700: #16405f;
   --color-navy-600: #1d5077;
 
+  --color-gold-100: #fdf3d3;
   --color-gold-300: #ffd76a;
   --color-gold-400: #ffc93c;
   --color-gold-500: #f5b70a;
   --color-gold-600: #dda307;
+  --color-gold-700: #a97b05;
 
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }

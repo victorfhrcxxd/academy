@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 
 const menuItems = [
   { href: '/admin', label: 'Dashboard', icon: 'dashboard' },
-  { href: '/admin/membros', label: 'Alunos', icon: 'users' },
+  { href: '/admin/membros', label: 'Usuários', icon: 'users' },
   { href: '/admin/cursos', label: 'Cursos', icon: 'book-open' },
   { href: '/admin/lives', label: 'Transmissões', icon: 'video' },
   { href: '/admin/inscricoes', label: 'Inscrições', icon: 'credit-card' },

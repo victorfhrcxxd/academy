@@ -16,7 +16,7 @@ export async function createMember(formData: unknown): Promise<ActionResponse> {
       return { success: false, error: parsed.error.issues[0].message }
     }
 
-    const { name, email, password, courseIds } = parsed.data
+    const { name, email, password, courseIds, role } = parsed.data
     const normalizedEmail = email.toLowerCase().trim()
 
     const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
@@ -31,16 +31,22 @@ export async function createMember(formData: unknown): Promise<ActionResponse> {
         name,
         email: normalizedEmail,
         password: hashedPassword,
-        role: 'MEMBER',
+        role,
         status: 'ACTIVE',
-        enrollments: {
-          create: courseIds.map((courseId) => ({ courseId })),
-        },
+        // admin enxerga tudo — matrícula só faz sentido pra aluno
+        enrollments:
+          role === 'ADMIN'
+            ? undefined
+            : { create: courseIds.map((courseId) => ({ courseId })) },
       },
     })
 
     revalidatePath('/admin/membros')
-    return { success: true, message: 'Aluno cadastrado com sucesso' }
+    return {
+      success: true,
+      message:
+        role === 'ADMIN' ? 'Administrador cadastrado com sucesso' : 'Aluno cadastrado com sucesso',
+    }
   } catch (error) {
     console.error('createMember:', error)
     return { success: false, error: 'Erro ao cadastrar aluno' }
@@ -57,6 +63,15 @@ export async function toggleMemberStatus(userId: string): Promise<ActionResponse
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return { success: false, error: 'Usuário não encontrado' }
 
+    if (user.role === 'ADMIN' && user.status === 'ACTIVE') {
+      const activeAdmins = await prisma.user.count({
+        where: { role: 'ADMIN', status: 'ACTIVE' },
+      })
+      if (activeAdmins <= 1) {
+        return { success: false, error: 'É preciso manter pelo menos um administrador ativo' }
+      }
+    }
+
     await prisma.user.update({
       where: { id: userId },
       data: { status: user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' },
@@ -67,6 +82,47 @@ export async function toggleMemberStatus(userId: string): Promise<ActionResponse
   } catch (error) {
     console.error('toggleMemberStatus:', error)
     return { success: false, error: 'Erro ao alterar status' }
+  }
+}
+
+// Promove aluno a administrador ou rebaixa admin a aluno
+export async function setMemberRole(userId: string, role: string): Promise<ActionResponse> {
+  try {
+    const session = await requireAdmin()
+
+    if (role !== 'ADMIN' && role !== 'MEMBER') {
+      return { success: false, error: 'Tipo de usuário inválido' }
+    }
+    if (userId === session.user.id) {
+      return { success: false, error: 'Você não pode alterar o próprio tipo de usuário' }
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) return { success: false, error: 'Usuário não encontrado' }
+    if (user.role === role) return { success: true }
+
+    if (user.role === 'ADMIN' && role === 'MEMBER') {
+      const activeAdmins = await prisma.user.count({
+        where: { role: 'ADMIN', status: 'ACTIVE' },
+      })
+      if (activeAdmins <= 1 && user.status === 'ACTIVE') {
+        return { success: false, error: 'É preciso manter pelo menos um administrador ativo' }
+      }
+    }
+
+    await prisma.user.update({ where: { id: userId }, data: { role } })
+
+    revalidatePath('/admin/membros')
+    return {
+      success: true,
+      message:
+        role === 'ADMIN'
+          ? `${user.name} agora é administrador`
+          : `${user.name} agora é aluno`,
+    }
+  } catch (error) {
+    console.error('setMemberRole:', error)
+    return { success: false, error: 'Erro ao alterar o tipo de usuário' }
   }
 }
 
@@ -132,13 +188,16 @@ export async function deleteMember(userId: string): Promise<ActionResponse> {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return { success: false, error: 'Usuário não encontrado' }
     if (user.role === 'ADMIN') {
-      return { success: false, error: 'Não é possível excluir um administrador' }
+      const admins = await prisma.user.count({ where: { role: 'ADMIN' } })
+      if (admins <= 1) {
+        return { success: false, error: 'Não é possível excluir o último administrador' }
+      }
     }
 
     await prisma.user.delete({ where: { id: userId } })
 
     revalidatePath('/admin/membros')
-    return { success: true, message: 'Aluno excluído' }
+    return { success: true, message: 'Usuário excluído' }
   } catch (error) {
     console.error('deleteMember:', error)
     return { success: false, error: 'Erro ao excluir aluno' }

@@ -5,6 +5,7 @@ import {
   createMember,
   toggleMemberStatus,
   setMemberEnrollments,
+  setMemberRole,
   resetMemberPassword,
   deleteMember,
 } from '@/server/actions/member-actions'
@@ -18,6 +19,7 @@ interface Member {
   id: string
   name: string
   email: string
+  role: string
   status: string
   createdAt: string
   courseIds: string[]
@@ -26,18 +28,21 @@ interface Member {
 export default function MembersManager({
   members,
   courses,
+  currentUserId,
 }: {
   members: Member[]
   courses: Course[]
+  currentUserId: string
 }) {
   const [showForm, setShowForm] = useState(false)
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  // formulário de novo aluno
+  // formulário de novo usuário
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [role, setRole] = useState<'MEMBER' | 'ADMIN'>('MEMBER')
   const [selectedCourses, setSelectedCourses] = useState<string[]>([])
 
   // edição de matrículas
@@ -52,17 +57,36 @@ export default function MembersManager({
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      const res = await createMember({ name, email, password, courseIds: selectedCourses })
+      const res = await createMember({
+        name,
+        email,
+        password,
+        role,
+        courseIds: role === 'ADMIN' ? [] : selectedCourses,
+      })
       if (res.success) {
-        notify(true, res.message || 'Aluno cadastrado')
+        notify(true, res.message || 'Usuário cadastrado')
         setName('')
         setEmail('')
         setPassword('')
+        setRole('MEMBER')
         setSelectedCourses([])
         setShowForm(false)
       } else {
         notify(false, res.error || 'Erro ao cadastrar')
       }
+    })
+  }
+
+  const handleRole = (m: Member) => {
+    const toAdmin = m.role !== 'ADMIN'
+    const msg = toAdmin
+      ? `Tornar ${m.name} ADMINISTRADOR? Admins acessam o painel, moderam o chat e enxergam todos os cursos.`
+      : `Remover os poderes de administrador de ${m.name}? A conta vira aluno comum.`
+    if (!confirm(msg)) return
+    startTransition(async () => {
+      const res = await setMemberRole(m.id, toAdmin ? 'ADMIN' : 'MEMBER')
+      notify(res.success, res.success ? res.message || 'Tipo alterado' : res.error || 'Erro')
     })
   }
 
@@ -73,7 +97,8 @@ export default function MembersManager({
     })
 
   const handleDelete = (m: Member) => {
-    if (!confirm(`Excluir o aluno ${m.name}? Essa ação não pode ser desfeita.`)) return
+    const tipo = m.role === 'ADMIN' ? 'o administrador' : 'o aluno'
+    if (!confirm(`Excluir ${tipo} ${m.name}? Essa ação não pode ser desfeita.`)) return
     startTransition(async () => {
       const res = await deleteMember(m.id)
       notify(res.success, res.success ? 'Aluno excluído' : res.error || 'Erro')
@@ -112,16 +137,17 @@ export default function MembersManager({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-navy-950">Alunos</h1>
+          <h1 className="text-2xl font-bold text-navy-950">Usuários</h1>
           <p className="text-sm text-gray-500">
-            Cadastre quem já fez a inscrição e libere o acesso às palestras ao vivo.
+            Cadastre alunos e administradores. Alunos assistem às transmissões; admins
+            gerenciam a plataforma e moderam o chat.
           </p>
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}
           className="rounded-lg bg-gold-500 hover:bg-gold-600 px-5 py-2.5 text-sm font-bold text-navy-950 transition"
         >
-          {showForm ? 'Fechar' : '+ Cadastrar aluno'}
+          {showForm ? 'Fechar' : '+ Cadastrar usuário'}
         </button>
       </div>
 
@@ -178,41 +204,83 @@ export default function MembersManager({
           </div>
           <div>
             <label className="block text-sm font-medium text-navy-950 mb-1.5">
-              Cursos liberados
+              Tipo de usuário
             </label>
-            <div className="flex flex-wrap gap-2">
-              {courses.length === 0 && (
-                <p className="text-sm text-gray-500">
-                  Nenhum curso criado ainda — crie em &quot;Cursos&quot;.
-                </p>
-              )}
-              {courses.map((c) => (
+            <div className="flex gap-2">
+              {(
+                [
+                  { value: 'MEMBER', label: 'Aluno' },
+                  { value: 'ADMIN', label: 'Administrador' },
+                ] as const
+              ).map((opt) => (
                 <label
-                  key={c.id}
-                  className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm ${
-                    selectedCourses.includes(c.id)
+                  key={opt.value}
+                  className={`cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium ${
+                    role === opt.value
                       ? 'border-navy-900 bg-navy-900 text-white'
                       : 'border-gray-300 text-gray-600'
                   }`}
                 >
                   <input
-                    type="checkbox"
+                    type="radio"
+                    name="role"
                     className="hidden"
-                    checked={selectedCourses.includes(c.id)}
-                    onChange={() => setSelectedCourses((l) => toggleInList(l, c.id))}
+                    checked={role === opt.value}
+                    onChange={() => setRole(opt.value)}
                   />
-                  {c.title}
+                  {opt.label}
                 </label>
               ))}
             </div>
+            {role === 'ADMIN' && (
+              <p className="mt-1.5 text-xs text-gray-500">
+                Acessa o painel, modera o chat e enxerga todos os cursos.
+              </p>
+            )}
           </div>
+          {role === 'MEMBER' && (
+            <div>
+              <label className="block text-sm font-medium text-navy-950 mb-1.5">
+                Cursos liberados
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {courses.length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    Nenhum curso criado ainda — crie em &quot;Cursos&quot;.
+                  </p>
+                )}
+                {courses.map((c) => (
+                  <label
+                    key={c.id}
+                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm ${
+                      selectedCourses.includes(c.id)
+                        ? 'border-navy-900 bg-navy-900 text-white'
+                        : 'border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={selectedCourses.includes(c.id)}
+                      onChange={() => setSelectedCourses((l) => toggleInList(l, c.id))}
+                    />
+                    {c.title}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="md:col-span-2">
             <button
               type="submit"
               disabled={isPending}
               className="rounded-lg bg-navy-950 hover:bg-navy-900 px-6 py-2.5 text-sm font-bold text-white transition disabled:opacity-60"
             >
-              {isPending ? 'Salvando...' : 'Cadastrar aluno'}
+              {isPending
+                ? 'Salvando...'
+                : role === 'ADMIN'
+                  ? 'Cadastrar administrador'
+                  : 'Cadastrar aluno'}
             </button>
           </div>
         </form>
@@ -222,7 +290,7 @@ export default function MembersManager({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left text-gray-500">
-              <th className="px-5 py-3 font-medium">Aluno</th>
+              <th className="px-5 py-3 font-medium">Usuário</th>
               <th className="px-5 py-3 font-medium">Cursos</th>
               <th className="px-5 py-3 font-medium">Status</th>
               <th className="px-5 py-3 font-medium text-right">Ações</th>
@@ -232,18 +300,32 @@ export default function MembersManager({
             {members.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-5 py-10 text-center text-gray-500">
-                  Nenhum aluno cadastrado ainda.
+                  Nenhum usuário cadastrado ainda.
                 </td>
               </tr>
             )}
             {members.map((m) => (
               <tr key={m.id}>
                 <td className="px-5 py-3">
-                  <p className="font-medium text-navy-950">{m.name}</p>
+                  <p className="font-medium text-navy-950 flex items-center gap-2">
+                    {m.name}
+                    {m.role === 'ADMIN' && (
+                      <span className="rounded-full bg-gold-100 text-gold-700 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide">
+                        Admin
+                      </span>
+                    )}
+                    {m.id === currentUserId && (
+                      <span className="rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-[11px]">
+                        você
+                      </span>
+                    )}
+                  </p>
                   <p className="text-gray-500">{m.email}</p>
                 </td>
                 <td className="px-5 py-3">
-                  {m.courseIds.length === 0 ? (
+                  {m.role === 'ADMIN' ? (
+                    <span className="text-gray-400 text-xs">acesso total</span>
+                  ) : m.courseIds.length === 0 ? (
                     <span className="text-gray-400">—</span>
                   ) : (
                     <div className="flex flex-wrap gap-1">
@@ -271,30 +353,42 @@ export default function MembersManager({
                 </td>
                 <td className="px-5 py-3">
                   <div className="flex justify-end gap-2 text-xs font-medium">
-                    <button
-                      onClick={() => openEnrollments(m)}
-                      className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
-                    >
-                      Matrículas
-                    </button>
+                    {m.role !== 'ADMIN' && (
+                      <button
+                        onClick={() => openEnrollments(m)}
+                        className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
+                      >
+                        Matrículas
+                      </button>
+                    )}
                     <button
                       onClick={() => handleResetPassword(m)}
                       className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
                     >
                       Senha
                     </button>
-                    <button
-                      onClick={() => handleToggle(m.id)}
-                      className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
-                    >
-                      {m.status === 'ACTIVE' ? 'Desativar' : 'Ativar'}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(m)}
-                      className="rounded-lg border border-red-200 text-red-600 px-2.5 py-1.5 hover:bg-red-50"
-                    >
-                      Excluir
-                    </button>
+                    {m.id !== currentUserId && (
+                      <>
+                        <button
+                          onClick={() => handleRole(m)}
+                          className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
+                        >
+                          {m.role === 'ADMIN' ? 'Tornar aluno' : 'Tornar admin'}
+                        </button>
+                        <button
+                          onClick={() => handleToggle(m.id)}
+                          className="rounded-lg border border-gray-300 px-2.5 py-1.5 hover:bg-gray-50"
+                        >
+                          {m.status === 'ACTIVE' ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(m)}
+                          className="rounded-lg border border-red-200 text-red-600 px-2.5 py-1.5 hover:bg-red-50"
+                        >
+                          Excluir
+                        </button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>

@@ -43,10 +43,11 @@ export async function POST(req: NextRequest) {
   }
   const data = parsed.data
 
-  // Curso precisa existir e estar ativo; o gratuito NÃO exige priceCents nem
-  // registrationOpen (essas travas são do fluxo pago).
+  // Curso precisa existir, estar ativo e TER plano gratuito (hasFreePlan);
+  // sem essa trava, um mapeamento errado na LP daria acesso grátis a curso pago.
+  // O gratuito não exige priceCents nem registrationOpen (travas do fluxo pago).
   const course = await prisma.course.findUnique({ where: { id: data.courseId } })
-  if (!course || course.status !== 'ACTIVE') {
+  if (!course || course.status !== 'ACTIVE' || !course.hasFreePlan) {
     return NextResponse.json({ error: 'Curso indisponível' }, { status: 422 })
   }
 

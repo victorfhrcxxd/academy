@@ -141,7 +141,8 @@ export async function setMemberEnrollments(
         prisma.enrollment.upsert({
           where: { userId_courseId: { userId, courseId } },
           update: {},
-          create: { userId, courseId },
+          // Matrícula dada pelo admin = acesso completo (plano PREMIUM)
+          create: { userId, courseId, plan: 'PREMIUM' },
         })
       ),
     ])

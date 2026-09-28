@@ -9,6 +9,7 @@ interface ChatMessage {
   createdAt: string
   author: string
   isAdmin: boolean
+  isPremium?: boolean
   mine: boolean
 }
 
@@ -266,12 +267,21 @@ export default function LiveChat({
         {messages.map((m) => (
           <div key={m.id} className="group text-sm">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className={`font-semibold ${m.isAdmin ? 'text-gold-600' : 'text-navy-900'}`}>
+              <span
+                className={`font-semibold ${
+                  m.isAdmin ? 'text-gold-600' : m.isPremium ? 'text-gold-700 font-bold' : 'text-navy-900'
+                }`}
+              >
                 {m.author}
               </span>
               {m.isAdmin && (
                 <span className="rounded bg-gold-500/15 text-gold-600 px-1.5 py-0.5 text-[10px] font-bold uppercase">
                   Equipe
+                </span>
+              )}
+              {m.isPremium && (
+                <span className="inline-flex items-center gap-0.5 rounded bg-gradient-to-r from-gold-500 to-gold-300 text-navy-950 px-1.5 py-0.5 text-[10px] font-bold uppercase">
+                  <Icon name="star-filled" className="h-2.5 w-2.5" /> Premium
                 </span>
               )}
               <span className="text-[11px] text-gray-400">

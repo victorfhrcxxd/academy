@@ -40,20 +40,27 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
 
   if (!live) notFound()
 
-  // Aluno só entra se estiver matriculado no curso (admin sempre pode)
-  if (session.user.role !== 'ADMIN') {
+  // Aluno só entra se estiver matriculado no curso (admin sempre pode);
+  // o plano da matrícula (FREE | PREMIUM) libera gravações e materiais
+  const isAdmin = session.user.role === 'ADMIN'
+  let hasPremium = isAdmin
+  if (!isAdmin) {
     const enrollment = await prisma.enrollment.findUnique({
       where: {
         userId_courseId: { userId: session.user.id, courseId: live.courseId },
       },
     })
     if (!enrollment) redirect('/aulas')
+    hasPremium = enrollment.plan === 'PREMIUM'
   }
 
-  const isAdmin = session.user.role === 'ADMIN'
-  // Encerrou e tem gravação → mostra o replay no lugar da live
-  const showReplay = live.status === 'ENDED' && !!live.replayUrl
-  const playerUrl = showReplay ? live.replayUrl : live.embedUrl
+  // Encerrou e tem gravação → replay no lugar da live (benefício Premium).
+  // Aluno FREE não recebe player nenhum depois que a gravação existe: vê o
+  // convite de upgrade no lugar.
+  const showReplay = live.status === 'ENDED' && !!live.replayUrl && hasPremium
+  const replayLocked = live.status === 'ENDED' && !!live.replayUrl && !hasPremium
+  const playerUrl = showReplay ? live.replayUrl : replayLocked ? null : live.embedUrl
+  const upgradeUrl = live.course.upgradeUrl
 
   return (
     <div className="mx-auto max-w-[1800px]">
@@ -93,6 +100,29 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
               restricted={live.restrictPlayer}
               title={live.title}
             />
+          ) : replayLocked ? (
+            <div className="rounded-2xl border border-gold-500/40 bg-navy-950 p-12 text-center flex flex-col items-center justify-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-gold-500 to-gold-300 text-navy-950 px-3 py-1 text-xs font-bold uppercase mb-4">
+                <Icon name="star-filled" className="h-3.5 w-3.5" /> Acesso Premium
+              </span>
+              <p className="text-xl font-bold text-white mb-2">
+                A gravação deste dia está disponível no Acesso Premium
+              </p>
+              <p className="text-white/70 max-w-md mx-auto mb-6">
+                Faça o upgrade e libere as gravações de todas as transmissões, os materiais
+                das aulas e o certificado de participação.
+              </p>
+              {upgradeUrl && (
+                <a
+                  href={upgradeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg bg-gold-500 hover:bg-gold-600 px-6 py-3 text-sm font-bold text-navy-950 transition"
+                >
+                  Quero o Acesso Premium
+                </a>
+              )}
+            </div>
           ) : (
             <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-16 text-center flex flex-col items-center justify-center">
               <Icon name="video" className="h-12 w-12 text-gray-300 mb-4" />
@@ -150,7 +180,30 @@ export default async function LiveDayPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
-          {live.materials.length > 0 && (
+          {live.materials.length > 0 && !hasPremium && (
+            <div className="mt-6 bg-white border border-gold-500/40 rounded-2xl p-6">
+              <h2 className="flex items-center gap-2 font-bold text-navy-950 mb-2">
+                <Icon name="lock" className="h-4 w-4 text-gold-600" /> Materiais do dia
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                {live.materials.length} material{live.materials.length === 1 ? '' : 'is'} de
+                apoio deste dia — disponível{live.materials.length === 1 ? '' : 'is'} no{' '}
+                <b>Acesso Premium</b>, junto com as gravações e o certificado.
+              </p>
+              {upgradeUrl && (
+                <a
+                  href={upgradeUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-navy-950 hover:bg-navy-900 px-5 py-2.5 text-sm font-bold text-gold-400 transition"
+                >
+                  <Icon name="star-filled" className="h-3.5 w-3.5" /> Fazer upgrade
+                </a>
+              )}
+            </div>
+          )}
+
+          {live.materials.length > 0 && hasPremium && (
             <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-6">
               <h2 className="flex items-center gap-2 font-bold text-navy-950 mb-4">
                 <Icon name="paperclip" className="h-4 w-4 text-gold-600" /> Materiais do dia

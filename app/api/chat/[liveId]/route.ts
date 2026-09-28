@@ -45,13 +45,22 @@ export async function GET(
 
   const after = req.nextUrl.searchParams.get('after')
 
+  // enrollments do curso desta live: diz o plano (FREE/PREMIUM) de cada autor
   const [messages, pinnedMessage] = await Promise.all([
     prisma.chatMessage.findMany({
       where: {
         liveId,
         ...(after ? { createdAt: { gt: new Date(after) } } : {}),
       },
-      include: { user: { select: { name: true, role: true } } },
+      include: {
+        user: {
+          select: {
+            name: true,
+            role: true,
+            enrollments: { where: { courseId: auth.live.courseId }, select: { plan: true } },
+          },
+        },
+      },
       orderBy: { createdAt: 'asc' },
       take: 200,
     }),
@@ -78,6 +87,8 @@ export async function GET(
       createdAt: m.createdAt.toISOString(),
       author: m.displayName || m.user.name,
       isAdmin: m.user.role === 'ADMIN',
+      // destaque Premium: só para alunos (admin já tem o selo Equipe)
+      isPremium: m.user.role !== 'ADMIN' && m.user.enrollments[0]?.plan === 'PREMIUM',
       mine: m.userId === auth.session.user.id,
     })),
   })

@@ -58,6 +58,8 @@ model Course {
   status      String   @default("ACTIVE") // ACTIVE | ARCHIVED
   priceCents       Int? // preço da inscrição em centavos (nulo = inscrição indisponível)
   registrationOpen Boolean @default(false) // liga/desliga inscrições via LP/Asaas
+  hasFreePlan      Boolean @default(false) // curso com plano gratuito: o pagamento vira upgrade PREMIUM da mesma matrícula
+  upgradeUrl       String? // link de compra do Premium mostrado ao aluno FREE (ex.: LP com ?premium=1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -236,6 +238,7 @@ model Enrollment {
   userId    String
   courseId  String
   source    String   @default("MANUAL") // MANUAL (admin) | ASAAS (webhook de pagamento)
+  plan      String   @default("FREE") // FREE | PREMIUM — nível de acesso dentro do MESMO curso
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

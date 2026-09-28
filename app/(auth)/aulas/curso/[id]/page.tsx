@@ -38,11 +38,14 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   })
   if (!course || course.status !== 'ACTIVE') notFound()
 
+  // Plano da matrícula (FREE | PREMIUM) — decide o selo e o convite de upgrade
+  let plan: string | null = null
   if (session.user.role !== 'ADMIN') {
     const enrollment = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: session.user.id, courseId: course.id } },
     })
     if (!enrollment) redirect('/aulas')
+    plan = enrollment.plan
   }
 
   // pesquisa de satisfação: aparece pro aluno quando algum dia já encerrou
@@ -64,10 +67,43 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
         ← Voltar para meus cursos
       </Link>
 
-      <h1 className="text-2xl font-bold text-navy-950 mt-4 mb-1">{course.title}</h1>
+      <div className="flex flex-wrap items-center gap-3 mt-4 mb-1">
+        <h1 className="text-2xl font-bold text-navy-950">{course.title}</h1>
+        {plan === 'PREMIUM' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-gold-500 to-gold-300 text-navy-950 px-3 py-1 text-xs font-bold uppercase">
+            <Icon name="star-filled" className="h-3 w-3" /> Acesso Premium
+          </span>
+        )}
+      </div>
       {course.description && (
-        <p className="text-gray-500 mb-8 whitespace-pre-line">{course.description}</p>
+        <p className="text-gray-500 mb-4 whitespace-pre-line">{course.description}</p>
       )}
+
+      {plan === 'FREE' && course.hasFreePlan && (
+        <div className="mb-8 mt-2 rounded-2xl bg-navy-950 border border-gold-500/40 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 font-bold text-white">
+              <Icon name="star-filled" className="h-4 w-4 text-gold-400" /> Desbloqueie o
+              Acesso Premium
+            </p>
+            <p className="text-sm text-white/70 mt-1">
+              Certificado de participação, apostila e materiais das aulas, gravações das
+              transmissões e nome com destaque no chat ao vivo.
+            </p>
+          </div>
+          {course.upgradeUrl && (
+            <a
+              href={course.upgradeUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg bg-gold-500 hover:bg-gold-600 px-5 py-2.5 text-sm font-bold text-navy-950 transition shrink-0"
+            >
+              Fazer upgrade
+            </a>
+          )}
+        </div>
+      )}
+      {!(plan === 'FREE' && course.hasFreePlan) && <div className="mb-4" />}
 
       {course.lives.length === 0 && (
         <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-500">
@@ -130,7 +166,9 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                       {day.status === 'LIVE'
                         ? '● Assistir ao vivo'
                         : day.status === 'ENDED' && day.replayUrl
-                          ? 'Assistir gravação'
+                          ? plan === 'FREE'
+                            ? 'Gravação · Premium'
+                            : 'Assistir gravação'
                           : 'Entrar na transmissão'}
                     </Link>
                   </div>

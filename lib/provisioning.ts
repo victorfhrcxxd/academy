@@ -94,7 +94,7 @@ async function markProcessed(eventId: string) {
 export async function confirmRegistration(registrationId: string): Promise<void> {
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { course: { select: { title: true } } },
+    include: { course: { select: { title: true, hasFreePlan: true } } },
   })
   if (!reg) return
   // Estorno/chargeback já registrado nunca volta a liberar acesso
@@ -143,10 +143,13 @@ export async function confirmRegistration(registrationId: string): Promise<void>
     })
   }
 
+  // Curso único com dois níveis: inscrição gratuita (sem cobrança Asaas) entra
+  // como FREE; pagamento confirmado entra/PROMOVE para PREMIUM. Nunca rebaixa.
+  const paid = !!reg.asaasPaymentId
   await prisma.enrollment.upsert({
     where: { userId_courseId: { userId, courseId: reg.courseId } },
-    create: { userId, courseId: reg.courseId, source: 'ASAAS' },
-    update: {}, // matrícula MANUAL existente não é tocada
+    create: { userId, courseId: reg.courseId, source: 'ASAAS', plan: paid ? 'PREMIUM' : 'FREE' },
+    update: paid ? { plan: 'PREMIUM' } : {}, // matrícula existente só muda pra cima
   })
 
   if (reg.userId !== userId) {
@@ -163,7 +166,7 @@ export async function confirmRegistration(registrationId: string): Promise<void>
 export async function sendConfirmationEmail(registrationId: string): Promise<boolean> {
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { course: { select: { title: true } } },
+    include: { course: { select: { title: true, hasFreePlan: true } } },
   })
   if (!reg || reg.status !== 'CONFIRMED') return false
 
@@ -190,6 +193,12 @@ export async function sendConfirmationEmail(registrationId: string): Promise<boo
           })) > 0
         : false
 
+      // O texto certo pra cada situação: inscrição gratuita não fala em
+      // pagamento; upgrade Premium (pagamento em curso com plano gratuito)
+      // anuncia os benefícios; curso 100% pago mantém os templates clássicos.
+      const paid = !!reg.asaasPaymentId
+      const isPremiumUpgrade = paid && reg.course.hasFreePlan
+
       if (needsPassword && reg.userId) {
         const token = randomBytes(32).toString('hex')
         await prisma.$transaction([
@@ -202,10 +211,18 @@ export async function sendConfirmationEmail(registrationId: string): Promise<boo
             },
           }),
         ])
-        templateKey = 'boas-vindas'
+        templateKey = isPremiumUpgrade
+          ? 'boas-vindas-premium'
+          : paid
+            ? 'boas-vindas'
+            : 'boas-vindas-gratuita'
         vars.link = `${appUrl()}/redefinir-senha/${token}`
       } else {
-        templateKey = 'acesso-liberado'
+        templateKey = isPremiumUpgrade
+          ? 'premium-liberado'
+          : paid
+            ? 'acesso-liberado'
+            : 'acesso-liberado-gratuito'
         vars.link = `${appUrl()}/login`
       }
     }
@@ -229,11 +246,14 @@ export async function sendConfirmationEmail(registrationId: string): Promise<boo
   return false
 }
 
-// Estorno/chargeback: marca o status e revoga só a matrícula criada via Asaas.
+// Estorno/chargeback: marca o status e revoga o que o pagamento tinha liberado.
+// Em curso com plano gratuito, o estorno REBAIXA a matrícula pra FREE (a pessoa
+// perde os benefícios Premium mas segue com acesso às lives). Em curso 100%
+// pago, remove a matrícula criada via Asaas, como sempre.
 async function revokeRegistration(registrationId: string, newStatus: string): Promise<void> {
   const reg = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { course: { select: { title: true } } },
+    include: { course: { select: { title: true, hasFreePlan: true } } },
   })
   if (!reg) return
 
@@ -241,17 +261,40 @@ async function revokeRegistration(registrationId: string, newStatus: string): Pr
     await prisma.registration.update({ where: { id: reg.id }, data: { status: newStatus } })
   }
 
-  if (reg.modality === 'ONLINE' && reg.userId) {
-    const removed = await prisma.enrollment.deleteMany({
-      where: { userId: reg.userId, courseId: reg.courseId, source: 'ASAAS' },
-    })
+  if (reg.modality !== 'ONLINE' || !reg.userId) return
+
+  // Outro pagamento confirmado do mesmo aluno neste curso mantém o acesso
+  const outroPagamento = await prisma.registration.count({
+    where: {
+      courseId: reg.courseId,
+      userId: reg.userId,
+      status: 'CONFIRMED',
+      asaasPaymentId: { not: null },
+      id: { not: reg.id },
+    },
+  })
+  if (outroPagamento > 0) return
+
+  const nome = reg.name.split(' ')[0]
+
+  if (reg.course.hasFreePlan) {
     // Matrículas MANUAL (dadas pelo admin) nunca são tocadas
-    if (removed.count > 0) {
-      const email = await montarEmail('acesso-revogado', {
-        nome: reg.name.split(' ')[0],
-        curso: reg.course.title,
-      })
+    const downgraded = await prisma.enrollment.updateMany({
+      where: { userId: reg.userId, courseId: reg.courseId, source: 'ASAAS', plan: 'PREMIUM' },
+      data: { plan: 'FREE' },
+    })
+    if (downgraded.count > 0) {
+      const email = await montarEmail('premium-revogado', { nome, curso: reg.course.title })
       await sendEmail({ to: reg.email, subject: email.subject, html: email.html }).catch(() => {})
     }
+    return
+  }
+
+  const removed = await prisma.enrollment.deleteMany({
+    where: { userId: reg.userId, courseId: reg.courseId, source: 'ASAAS' },
+  })
+  if (removed.count > 0) {
+    const email = await montarEmail('acesso-revogado', { nome, curso: reg.course.title })
+    await sendEmail({ to: reg.email, subject: email.subject, html: email.html }).catch(() => {})
   }
 }

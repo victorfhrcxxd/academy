@@ -74,6 +74,103 @@ export const TEMPLATE_DEFAULTS: Record<
 </div>`,
     variables: ['{{nome}}', '{{curso}}', '{{link}}'],
   },
+  'boas-vindas-gratuita': {
+    name: 'Boas-vindas (inscrição gratuita)',
+    subject: 'Inscrição confirmada: crie sua senha de acesso',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Inscrição confirmada!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Sua inscrição gratuita em <b>{{curso}}</b> foi confirmada e seu acesso às transmissões ao vivo já está liberado.</p>
+  <p>Clique no botão abaixo para criar sua senha e entrar na plataforma:</p>
+  <p style="margin:28px 0">
+    <a href="{{link}}" style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
+      Criar minha senha
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px">O link vale por 72 horas. Depois disso, use a opção "Esqueci minha senha" na tela de login.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}', '{{link}}'],
+  },
+  'acesso-liberado-gratuito': {
+    name: 'Acesso liberado (inscrição gratuita, aluno que já tinha conta)',
+    subject: 'Acesso liberado | {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Acesso liberado!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Sua inscrição gratuita em <b>{{curso}}</b> foi confirmada e o acesso às transmissões ao vivo foi liberado na sua conta.</p>
+  <p>Entre com seu login de sempre:</p>
+  <p style="margin:28px 0">
+    <a href="{{link}}" style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
+      Acessar a plataforma
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px">Esqueceu a senha? Use a opção "Esqueci minha senha" na tela de login.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}', '{{link}}'],
+  },
+  'boas-vindas-premium': {
+    name: 'Acesso Premium confirmado (aluno novo: cria a senha)',
+    subject: '⭐ Acesso Premium confirmado | {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Seu Acesso Premium está ativo!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Seu pagamento foi confirmado e você agora tem o <b>Acesso Premium</b> de <b>{{curso}}</b>:</p>
+  <ul style="color:#333;line-height:1.7;padding-left:20px">
+    <li>Certificado de participação</li>
+    <li>Apostila e materiais das aulas</li>
+    <li>Gravações das transmissões para rever quando quiser</li>
+    <li>Nome com destaque Premium no chat ao vivo</li>
+  </ul>
+  <p>Clique no botão abaixo para criar sua senha e entrar na plataforma:</p>
+  <p style="margin:28px 0">
+    <a href="{{link}}" style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
+      Criar minha senha
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px">O link vale por 72 horas. Depois disso, use a opção "Esqueci minha senha" na tela de login.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}', '{{link}}'],
+  },
+  'premium-liberado': {
+    name: 'Acesso Premium confirmado (aluno que já tinha conta)',
+    subject: '⭐ Acesso Premium confirmado | {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Seu Acesso Premium está ativo!</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Seu pagamento foi confirmado e sua conta em <b>{{curso}}</b> foi promovida para o <b>Acesso Premium</b>:</p>
+  <ul style="color:#333;line-height:1.7;padding-left:20px">
+    <li>Certificado de participação</li>
+    <li>Apostila e materiais das aulas</li>
+    <li>Gravações das transmissões para rever quando quiser</li>
+    <li>Nome com destaque Premium no chat ao vivo</li>
+  </ul>
+  <p>Entre com seu login de sempre:</p>
+  <p style="margin:28px 0">
+    <a href="{{link}}" style="background:#f5b70a;color:#0b2233;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">
+      Acessar a plataforma
+    </a>
+  </p>
+  <p style="color:#666;font-size:13px">Esqueceu a senha? Use a opção "Esqueci minha senha" na tela de login.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}', '{{link}}'],
+  },
+  'premium-revogado': {
+    name: 'Premium suspenso (estorno/chargeback — mantém acesso gratuito)',
+    subject: 'Acesso Premium suspenso | {{curso}}',
+    body: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px">
+  <h2 style="color:#0b2233">Acesso Premium suspenso</h2>
+  <p>Olá, {{nome}}!</p>
+  <p>Identificamos o estorno do pagamento do seu Acesso Premium em <b>{{curso}}</b> e, por isso, os benefícios Premium (certificado, materiais e gravações) foram suspensos.</p>
+  <p>Seu acesso gratuito às transmissões ao vivo continua normal.</p>
+  <p>Se acredita que houve um engano, fale com a nossa equipe respondendo este e-mail.</p>
+  <p style="color:#999;font-size:12px">Valeriote Cursos e Consultoria</p>
+</div>`,
+    variables: ['{{nome}}', '{{curso}}'],
+  },
   'inscricao-presencial-confirmada': {
     name: 'Inscrição presencial confirmada',
     subject: 'Vaga garantida | {{curso}}',

@@ -23,6 +23,10 @@ export const courseSchema = z.object({
     .nullable()
     .optional(),
   registrationOpen: z.boolean().optional(),
+  // Curso com plano gratuito: o pagamento vira upgrade PREMIUM da mesma matrícula
+  hasFreePlan: z.boolean().optional(),
+  // Link de compra do Premium mostrado ao aluno FREE (ex.: LP com ?premium=1)
+  upgradeUrl: z.string().trim().max(500).optional(),
 })
 
 export type CourseInput = z.infer<typeof courseSchema>

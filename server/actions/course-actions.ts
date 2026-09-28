@@ -21,6 +21,8 @@ export async function createCourse(formData: unknown): Promise<ActionResponse> {
         description: parsed.data.description || null,
         priceCents: parsed.data.priceCents ?? null,
         registrationOpen: parsed.data.registrationOpen ?? false,
+        hasFreePlan: parsed.data.hasFreePlan ?? false,
+        upgradeUrl: parsed.data.upgradeUrl || null,
       },
     })
 
@@ -51,6 +53,8 @@ export async function updateCourse(
         description: parsed.data.description || null,
         priceCents: parsed.data.priceCents ?? null,
         registrationOpen: parsed.data.registrationOpen ?? false,
+        hasFreePlan: parsed.data.hasFreePlan ?? false,
+        upgradeUrl: parsed.data.upgradeUrl || null,
       },
     })
 

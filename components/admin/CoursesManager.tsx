@@ -15,6 +15,8 @@ interface Course {
   status: string
   priceCents: number | null
   registrationOpen: boolean
+  hasFreePlan: boolean
+  upgradeUrl: string | null
   students: number
   lives: number
 }
@@ -29,6 +31,8 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('') // em reais, ex.: "497,00"
   const [registrationOpen, setRegistrationOpen] = useState(false)
+  const [hasFreePlan, setHasFreePlan] = useState(false)
+  const [upgradeUrl, setUpgradeUrl] = useState('')
   const [feedback, setFeedback] = useState<{ ok: boolean; text: string } | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -43,6 +47,8 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
     setDescription('')
     setPrice('')
     setRegistrationOpen(false)
+    setHasFreePlan(false)
+    setUpgradeUrl('')
     setShowForm(true)
   }
 
@@ -52,6 +58,8 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
     setDescription(c.description || '')
     setPrice(c.priceCents != null ? (c.priceCents / 100).toFixed(2).replace('.', ',') : '')
     setRegistrationOpen(c.registrationOpen)
+    setHasFreePlan(c.hasFreePlan)
+    setUpgradeUrl(c.upgradeUrl || '')
     setShowForm(true)
   }
 
@@ -74,6 +82,8 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
         description: description || undefined,
         priceCents,
         registrationOpen,
+        hasFreePlan,
+        upgradeUrl: upgradeUrl.trim() || undefined,
       }
       const res = editing
         ? await updateCourse(editing.id, payload)
@@ -186,6 +196,30 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
               Inscrições abertas (LP / pagamento Asaas)
             </label>
           </div>
+          <div className="rounded-xl bg-gold-100/40 border border-gold-500/30 p-4 space-y-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-navy-950 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hasFreePlan}
+                onChange={(e) => setHasFreePlan(e.target.checked)}
+                className="h-4 w-4 accent-gold-500"
+              />
+              Curso com plano gratuito (o pagamento vira upgrade Premium da mesma matrícula)
+            </label>
+            {hasFreePlan && (
+              <div>
+                <label className="block text-sm font-medium text-navy-950 mb-1.5">
+                  Link de upgrade Premium (mostrado ao aluno gratuito)
+                </label>
+                <input
+                  value={upgradeUrl}
+                  onChange={(e) => setUpgradeUrl(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  placeholder="https://page.valecursoseconsultoria.com.br/...?premium=1"
+                />
+              </div>
+            )}
+          </div>
           <div className="flex gap-3">
             <button
               type="submit"
@@ -233,6 +267,11 @@ export default function CoursesManager({ courses }: { courses: Course[] }) {
               {c.registrationOpen && (
                 <span className="ml-2 rounded-full bg-gold-100 text-gold-700 px-2 py-0.5 text-xs font-bold">
                   Inscrições abertas
+                </span>
+              )}
+              {c.hasFreePlan && (
+                <span className="ml-2 rounded-full bg-navy-950 text-gold-400 px-2 py-0.5 text-xs font-bold">
+                  Gratuito + Premium
                 </span>
               )}
             </p>

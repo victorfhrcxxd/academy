@@ -17,6 +17,8 @@ export default async function AdminCoursesPage() {
     status: c.status,
     priceCents: c.priceCents,
     registrationOpen: c.registrationOpen,
+    hasFreePlan: c.hasFreePlan,
+    upgradeUrl: c.upgradeUrl,
     students: c._count.enrollments,
     lives: c._count.lives,
   }))

@@ -26,6 +26,10 @@ async function main() {
     'material',
     'surveyResponse',
     'reminderLog',
+    'emailTemplate',
+    'emailSettings',
+    'registration',
+    'webhookEvent',
   ]
 
   for (const model of order) {

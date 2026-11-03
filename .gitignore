@@ -82,3 +82,4 @@ prisma/dev.db-journal
 
 # Backups do banco (nunca commitar - contem dados de usuarios)
 backups/
+tsconfig.tsbuildinfo

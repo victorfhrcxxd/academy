@@ -21,6 +21,10 @@ async function main() {
     'surveyResponse',
     'passwordResetToken',
     'reminderLog',
+    'emailTemplate',
+    'emailSettings',
+    'registration',
+    'webhookEvent',
   ]
   for (const m of models) {
     data[m] = await prisma[m].findMany()

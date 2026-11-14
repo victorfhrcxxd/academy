@@ -145,7 +145,8 @@ export async function confirmRegistration(registrationId: string): Promise<void>
 
   // Curso único com dois níveis: inscrição gratuita (sem cobrança Asaas) entra
   // como FREE; pagamento confirmado entra/PROMOVE para PREMIUM. Nunca rebaixa.
-  const paid = !!reg.asaasPaymentId
+  // origin.paidImport = comprador importado em massa (pagou fora da plataforma)
+  const paid = !!reg.asaasPaymentId || (reg.origin as any)?.paidImport === true
   await prisma.enrollment.upsert({
     where: { userId_courseId: { userId, courseId: reg.courseId } },
     create: { userId, courseId: reg.courseId, source: 'ASAAS', plan: paid ? 'PREMIUM' : 'FREE' },
@@ -196,7 +197,8 @@ export async function sendConfirmationEmail(registrationId: string): Promise<boo
       // O texto certo pra cada situação: inscrição gratuita não fala em
       // pagamento; upgrade Premium (pagamento em curso com plano gratuito)
       // anuncia os benefícios; curso 100% pago mantém os templates clássicos.
-      const paid = !!reg.asaasPaymentId
+      // origin.paidImport (importação em massa de compradores) conta como pago.
+      const paid = !!reg.asaasPaymentId || (reg.origin as any)?.paidImport === true
       const isPremiumUpgrade = paid && reg.course.hasFreePlan
 
       if (needsPassword && reg.userId) {

@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
   const blob = await put(`db-backups/academy-${stamp}.json.enc`, payload, {
     access: 'public',
     contentType: 'application/octet-stream',
+    allowOverwrite: true, // segunda execução no mesmo dia atualiza o arquivo
   })
 
   // retenção: mantém os 14 mais recentes

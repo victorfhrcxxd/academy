@@ -1,12 +1,15 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toEmbedUrl } from '@/lib/embed'
 import Icon from '@/components/Icon'
 
 // Player protegido (YouTube): oculta título/controles nativos, bloqueia cliques no
 // vídeo (não dá pra pausar nem abrir no YouTube) e oferece controles próprios
 // (iniciar/som/volume/tela cheia) via postMessage da API de iframe do YouTube.
+// Quando a live engasga, o YouTube cai no estado "encerrado" (seta de replay) e o
+// escudo impede o clique: por isso o player se recarrega sozinho e há um botão manual.
+const MAX_AUTO_RECOVER = 6
 export default function ProtectedPlayer({
   embedUrl,
   restricted,
@@ -21,6 +24,99 @@ export default function ProtectedPlayer({
   const [started, setStarted] = useState(false)
   const [muted, setMuted] = useState(false)
   const [volume, setVolume] = useState(100)
+  const [reloadKey, setReloadKey] = useState(0)
+  const [stalled, setStalled] = useState(false)
+  const stateRef = useRef({ started: false, muted: false, volume: 100 })
+  useEffect(() => {
+    stateRef.current = { started, muted, volume }
+  }, [started, muted, volume])
+  const attemptsRef = useRef(0)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const needsSyncRef = useRef(false)
+
+  const post = useCallback((data: unknown) => {
+    frameRef.current?.contentWindow?.postMessage(JSON.stringify(data), '*')
+  }, [])
+
+  const reload = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = null
+    needsSyncRef.current = true
+    setStalled(false)
+    setReloadKey((k) => k + 1)
+  }, [])
+
+  // O iframe só informa o estado depois de receber "listening"; repete até responder.
+  useEffect(() => {
+    let answered = false
+    let tries = 0
+    const handshake = setInterval(() => {
+      if (answered || ++tries > 40) return clearInterval(handshake)
+      post({ event: 'listening', id: 'academy', channel: 'widget' })
+    }, 500)
+
+    // O iframe recarregado volta mudo (autoplay): reaplica som e volume do aluno.
+    const sync = () => {
+      const { started, muted, volume } = stateRef.current
+      if (!started) return
+      post({ event: 'command', func: 'playVideo', args: [] })
+      if (!muted) {
+        post({ event: 'command', func: 'unMute', args: [] })
+        post({ event: 'command', func: 'setVolume', args: [volume] })
+      }
+    }
+
+    const onMessage = (e: MessageEvent) => {
+      if (e.source !== frameRef.current?.contentWindow) return
+      if (!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(e.origin)) return
+      let msg: { event?: string; info?: unknown }
+      try {
+        msg = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
+      } catch {
+        return
+      }
+      if (!answered) {
+        answered = true
+        if (needsSyncRef.current) sync()
+      }
+      const state =
+        msg.event === 'onStateChange'
+          ? msg.info
+          : (msg.info as { playerState?: number } | null)?.playerState
+      if (state === 1) {
+        attemptsRef.current = 0
+        setStalled(false)
+        if (needsSyncRef.current) {
+          needsSyncRef.current = false
+          sync()
+        }
+      } else if (state === 0) {
+        setStalled(true)
+        if (!timerRef.current && attemptsRef.current < MAX_AUTO_RECOVER) {
+          const wait = attemptsRef.current === 0 ? 1500 : 8000
+          attemptsRef.current++
+          timerRef.current = setTimeout(reload, wait)
+        }
+      }
+    }
+    window.addEventListener('message', onMessage)
+    return () => {
+      clearInterval(handshake)
+      window.removeEventListener('message', onMessage)
+    }
+  }, [reloadKey, post, reload])
+
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    },
+    []
+  )
+
+  const manualReload = () => {
+    attemptsRef.current = 0
+    reload()
+  }
 
   const base = toEmbedUrl(embedUrl)
   const isYouTube = base.includes('youtube.com/embed/')
@@ -91,6 +187,7 @@ export default function ProtectedPlayer({
       <div ref={wrapRef} className="relative w-full bg-black group flex flex-col">
         <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
           <iframe
+            key={reloadKey}
             ref={frameRef}
             src={src}
             className="absolute inset-0 h-full w-full"
@@ -99,6 +196,18 @@ export default function ProtectedPlayer({
           />
           {/* Escudo: bloqueia qualquer clique no player (título, pause, logo) */}
           <div className="absolute inset-0 z-10" />
+
+          {stalled && started && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/80 text-white">
+              <p className="text-sm font-bold">Reconectando à transmissão…</p>
+              <button
+                onClick={manualReload}
+                className="rounded-full bg-gold-500 hover:bg-gold-600 text-navy-950 font-black px-6 py-3 text-sm shadow-lg transition"
+              >
+                Recarregar agora
+              </button>
+            </div>
+          )}
 
           {!started && (
             <button
@@ -130,6 +239,13 @@ export default function ProtectedPlayer({
             title="Volume"
           />
           <div className="flex-1" />
+          <button
+            onClick={manualReload}
+            className="text-sm font-bold hover:text-gold-400"
+            title="Recarregar a transmissão se ela travar"
+          >
+            Recarregar transmissão
+          </button>
           <button
             onClick={goFullscreen}
             className="flex items-center gap-2 text-sm font-bold hover:text-gold-400"

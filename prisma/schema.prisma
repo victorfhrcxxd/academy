@@ -239,6 +239,7 @@ model Enrollment {
   courseId  String
   source    String   @default("MANUAL") // MANUAL (admin) | ASAAS (webhook de pagamento)
   plan      String   @default("FREE") // FREE | PREMIUM — nível de acesso dentro do MESMO curso
+  certificateUrl String? // página do certificado emitido no Credence (sistema de crachá)
   createdAt DateTime @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
